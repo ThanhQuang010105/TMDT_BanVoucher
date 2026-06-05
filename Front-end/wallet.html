@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Ví Voucher của tôi - VoucherHub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "primary": "#004ac6",
+                "on-primary": "#ffffff",
+                "background": "#f8f9ff",
+                "surface": "#f8f9ff",
+                "on-surface": "#0b1c30",
+                "outline-variant": "#c3c6d7",
+                "outline": "#737686",
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-low": "#eff4ff",
+                "surface-container": "#e5eeff"
+              }
+            }
+          }
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-sans antialiased min-h-screen flex flex-col pt-16">
+    <!-- Header -->
+    <header class="bg-white shadow-sm fixed top-0 left-0 w-full z-50 flex items-center h-16 border-b border-outline-variant/30">
+        <div class="w-full max-w-[1280px] mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <a class="text-xl font-bold text-primary" href="home.html">VoucherHub</a>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="home.html">Trang chủ</a>
+                <a class="text-primary border-b-2 border-primary pb-1 font-semibold text-sm" href="wallet.html">Ví Voucher</a>
+            </nav>
+            
+            <div class="flex items-center gap-4">
+                <div class="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-outline-variant" onclick="window.location.href='profile.html'">
+                    <img id="nav-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYyDS7WVb__iZiLCmeWtiABRQWW4MLkC0dYzZLlS-EKgTk1__5gjIG5jPTuHHJeqUrkqoIYW2teLTJWMnnC8tfyVNl1VhliYokzGTdBeV1Mqz9RQeMCz1eGhwIokkwbc9a23JKMRuEnD4Zqw-UdlDzPJO1HeZ7OlRrpHOotrk8ziTJ0JyQO-bijb9VG7oW_NjkxZqqpMrY9RCL8RmM5f8ke2tndGc1C6mw1JEBLD0egFfBCJYpgbveewLzG4PIEoNK8MzNxJlVAoU"/>
+                </div>
+                <a class="text-sm font-semibold text-primary" href="home.html">Quay lại trang chủ</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-[1280px] mx-auto w-full px-6 py-8">
+        <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[28px]">account_balance_wallet</span> Ví Voucher của tôi
+        </h1>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-outline-variant/30 mb-8 bg-white p-1 rounded-lg shadow-sm">
+            <button id="tab-chua_su_dung" class="flex-1 py-3 text-center font-bold text-sm text-primary border-b-2 border-primary" onclick="switchTab('chua_su_dung')">
+                Chưa sử dụng
+            </button>
+            <button id="tab-da_su_dung" class="flex-1 py-3 text-center font-semibold text-sm text-outline border-b-2 border-transparent" onclick="switchTab('da_su_dung')">
+                Đã sử dụng
+            </button>
+            <button id="tab-da_huy" class="flex-1 py-3 text-center font-semibold text-sm text-outline border-b-2 border-transparent" onclick="switchTab('da_huy')">
+                Đã hết hạn/Hủy
+            </button>
+        </div>
+
+        <!-- Voucher Cards List Container -->
+        <div id="voucher-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards dynamically rendered -->
+            <div class="col-span-full py-12 text-center text-outline">Đang tải ví voucher...</div>
+        </div>
+    </main>
+
+    <!-- QR Code Modal (for Unused) -->
+    <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="fixed inset-0 bg-black/50" onclick="closeQrModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl z-10 max-w-[400px] w-full p-6 relative flex flex-col items-center">
+            <button class="material-symbols-outlined absolute top-4 right-4 text-outline hover:text-on-surface" onclick="closeQrModal()">close</button>
+            
+            <h3 id="qr-title" class="font-bold text-base text-center mb-1 text-on-surface">Mã E-Voucher</h3>
+            <p id="qr-partner" class="text-xs text-outline mb-4">Đối tác cung cấp</p>
+            
+            <!-- QR code image -->
+            <div class="p-3 bg-slate-50 border border-outline-variant/30 rounded-xl mb-4">
+                <img id="qr-image" class="w-48 h-48" src="" alt="QR Code"/>
+            </div>
+
+            <div class="w-full text-center bg-slate-50 border border-outline-variant/20 rounded-lg py-2.5 px-4 mb-4">
+                <span class="text-[10px] font-bold text-outline block uppercase tracking-wider mb-0.5">Mã Voucher Code</span>
+                <span id="qr-code-text" class="text-base font-bold text-primary font-mono tracking-widest">VC-XXXXX</span>
+            </div>
+
+            <div class="w-full text-center bg-error/5 text-error rounded-lg py-2.5 px-4">
+                <span class="text-[10px] font-bold block uppercase tracking-wider mb-0.5">Mã bảo mật (Dành cho đại lý)</span>
+                <span id="qr-security-text" class="text-xs font-mono break-all font-semibold">12345abcdef</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review / Rating Modal (for Used) -->
+    <div id="review-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="fixed inset-0 bg-black/50" onclick="closeReviewModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl z-10 max-w-[440px] w-full p-6 relative flex flex-col">
+            <button class="material-symbols-outlined absolute top-4 right-4 text-outline hover:text-on-surface" onclick="closeReviewModal()">close</button>
+            
+            <h3 class="font-bold text-lg mb-2 text-primary">Đánh giá dịch vụ</h3>
+            <p id="review-voucher-title" class="text-xs text-outline mb-6">Đánh giá cho sản phẩm</p>
+
+            <!-- Stars selector -->
+            <div class="flex justify-center gap-3 mb-6">
+                <button type="button" class="star-btn text-slate-300 hover:scale-110 transition-transform" onclick="setRating(1)">
+                    <span class="material-symbols-outlined text-[32px] fill-current">star</span>
+                </button>
+                <button type="button" class="star-btn text-slate-300 hover:scale-110 transition-transform" onclick="setRating(2)">
+                    <span class="material-symbols-outlined text-[32px] fill-current">star</span>
+                </button>
+                <button type="button" class="star-btn text-slate-300 hover:scale-110 transition-transform" onclick="setRating(3)">
+                    <span class="material-symbols-outlined text-[32px] fill-current">star</span>
+                </button>
+                <button type="button" class="star-btn text-slate-300 hover:scale-110 transition-transform" onclick="setRating(4)">
+                    <span class="material-symbols-outlined text-[32px] fill-current">star</span>
+                </button>
+                <button type="button" class="star-btn text-slate-300 hover:scale-110 transition-transform" onclick="setRating(5)">
+                    <span class="material-symbols-outlined text-[32px] fill-current">star</span>
+                </button>
+            </div>
+
+            <!-- Comment -->
+            <div class="flex flex-col gap-1 mb-6">
+                <label class="text-xs font-bold text-outline uppercase">Ý kiến nhận xét của bạn</label>
+                <textarea id="review-comment" rows="4" class="w-full border border-outline-variant rounded-lg p-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Hãy chia sẻ trải nghiệm sử dụng voucher tại đây..."></textarea>
+            </div>
+
+            <button class="w-full h-11 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity" onclick="submitReview()">
+                Gửi đánh giá & Bình luận
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-auto border-t border-outline-variant/30 py-6 px-6">
+        <div class="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-on-surface-variant">
+            <span>© 2026 VoucherHub. Bảo lưu mọi quyền.</span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        Auth.requireAuth();
+
+        let currentTab = 'chua_su_dung';
+        let currentRating = 5;
+        let reviewVoucherId = '';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVouchers();
+        });
+
+        // Chuyển Tab trạng thái
+        function switchTab(status) {
+            currentTab = status;
+            
+            // Cập nhật class CSS các nút Tab
+            ['chua_su_dung', 'da_su_dung', 'da_huy'].forEach(s => {
+                const btn = document.getElementById('tab-' + s);
+                if (s === status) {
+                    btn.className = "flex-1 py-3 text-center font-bold text-sm text-primary border-b-2 border-primary";
+                } else {
+                    btn.className = "flex-1 py-3 text-center font-semibold text-sm text-outline border-b-2 border-transparent";
+                }
+            });
+
+            loadVouchers();
+        }
+
+        // Tải danh sách voucher
+        async function loadVouchers() {
+            try {
+                const res = await apiFetch(`/api/orders/my-vouchers?trang_thai=${currentTab}`);
+                renderVouchers(res.data);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Render ra giao diện
+        function renderVouchers(items) {
+            const container = document.getElementById('voucher-list-container');
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                <div class="col-span-full py-12 text-center text-outline flex flex-col items-center">
+                    <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>
+                    <p>Không có voucher nào trong danh sách này.</p>
+                </div>`;
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                const isUnused = item.trang_thai === 'chua_su_dung';
+                const isUsed = item.trang_thai === 'da_su_dung';
+                
+                let actionBtn = '';
+                if (isUnused) {
+                    actionBtn = `<button class="w-full mt-3 py-2 bg-primary/5 hover:bg-primary/10 text-primary font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1" onclick="showQrModal('${item.ma_voucher_code}', '${item.voucher.ten_voucher}', '${item.voucher.doi_tac?.ten_doanh_nghiep || 'Đối tác'}', '${item.chuoi_ma_bao_mat}')">
+                        <span class="material-symbols-outlined text-[16px]">qr_code</span> Hiện mã QR dùng ngay
+                    </button>`;
+                } else if (isUsed) {
+                    actionBtn = `<button class="w-full mt-3 py-2 bg-secondary/5 hover:bg-secondary/10 text-secondary font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1" onclick="openReviewModal('${item.voucher.ma_voucher}', '${item.voucher.ten_voucher}')">
+                        <span class="material-symbols-outlined text-[16px]">rate_review</span> Đánh giá dịch vụ
+                    </button>`;
+                } else {
+                    actionBtn = `<div class="w-full mt-3 text-center py-2 text-outline bg-slate-50 text-[10px] font-bold rounded-lg">KHÔNG THỂ SỬ DỤNG</div>`;
+                }
+
+                html += `
+                <div class="bg-white rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden flex flex-col p-4 relative justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold text-outline tracking-wide font-mono">${item.ma_voucher_code}</span>
+                            <span class="px-2 py-0.5 text-[9px] font-bold rounded-full ${getStatusBadgeClass(item.trang_thai)}">
+                                ${getStatusText(item.trang_thai)}
+                            </span>
+                        </div>
+                        <h3 class="text-sm font-bold text-on-surface line-clamp-1 mb-1">${item.voucher.ten_voucher}</h3>
+                        <p class="text-xs text-outline flex items-center gap-1 mb-2">
+                            <span class="material-symbols-outlined text-[14px]">storefront</span> 
+                            ${item.voucher.doi_tac?.ten_doanh_nghiep || 'Đại lý hệ thống'}
+                        </p>
+                        <div class="text-[10px] text-outline">Hạn dùng đến: <strong class="text-on-surface">${formatDate(item.voucher.ngay_kt)}</strong></div>
+                    </div>
+                    ${actionBtn}
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'chua_su_dung': return 'bg-primary/10 text-primary';
+                case 'da_su_dung': return 'bg-secondary/10 text-secondary';
+                case 'da_huy': return 'bg-error/10 text-error';
+                default: return 'bg-slate-100 text-slate-500';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'chua_su_dung': return 'Chưa dùng';
+                case 'da_su_dung': return 'Đã dùng';
+                case 'da_huy': return 'Đã hủy/Hết hạn';
+                default: return status;
+            }
+        }
+
+        // Qr Modal logic
+        function showQrModal(code, title, partner, security) {
+            document.getElementById('qr-title').textContent = title;
+            document.getElementById('qr-partner').textContent = `Đối tác: ${partner}`;
+            document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${code}`;
+            document.getElementById('qr-code-text').textContent = code;
+            document.getElementById('qr-security-text').textContent = security;
+            
+            document.getElementById('qr-modal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qr-modal').classList.add('hidden');
+        }
+
+        // Đánh giá Modal logic
+        function openReviewModal(voucherId, voucherTitle) {
+            reviewVoucherId = voucherId;
+            document.getElementById('review-voucher-title').textContent = `Sản phẩm: ${voucherTitle}`;
+            document.getElementById('review-comment').value = '';
+            setRating(5);
+            document.getElementById('review-modal').classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('review-modal').classList.add('hidden');
+        }
+
+        function setRating(score) {
+            currentRating = score;
+            const buttons = document.querySelectorAll('.star-btn');
+            buttons.forEach((btn, idx) => {
+                if (idx < score) {
+                    btn.className = "star-btn text-amber-500 hover:scale-110 transition-transform";
+                } else {
+                    btn.className = "star-btn text-slate-300 hover:scale-110 transition-transform";
+                }
+            });
+        }
+
+        async function submitReview() {
+            const comment = document.getElementById('review-comment').value.trim();
+            try {
+                const res = await apiFetch('/api/orders/reviews', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        ma_voucher: reviewVoucherId,
+                        diem_so_dg: currentRating,
+                        noi_dung_binh_luan: comment || undefined
+                    })
+                });
+
+                showToast(res.message, 'success');
+                closeReviewModal();
+                loadVouchers();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

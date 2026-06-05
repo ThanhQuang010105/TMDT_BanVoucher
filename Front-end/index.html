@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>VoucherHub - Authentication</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .tab-content {
+            display: none !important;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: flex !important;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#2563eb",
+                        "inverse-surface": "#213145",
+                        "secondary": "#006c49",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-tint": "#0053db",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-primary-fixed": "#00174b",
+                        "secondary-container": "#6cf8bb",
+                        "surface-container-low": "#eff4ff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "background": "#f8f9ff",
+                        "tertiary-container": "#996100",
+                        "error": "#ba1a1a",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container-high": "#dce9ff",
+                        "on-secondary-fixed": "#002113",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-tertiary-container": "#ffeedd",
+                        "primary": "#004ac6",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface": "#f8f9ff",
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#e5eeff",
+                        "tertiary": "#784b00",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#00714d",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f8f9ff",
+                        "outline-variant": "#c3c6d7",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-variant": "#d3e4fe",
+                        "on-error": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface-variant": "#434655",
+                        "on-primary-container": "#eeefff",
+                        "on-surface": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "base": "8px"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden font-sans text-on-background">
+    <!-- Background Decor -->
+    <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-primary-fixed blur-[100px] opacity-60 z-0"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[30vw] h-[30vw] rounded-full bg-secondary-fixed blur-[100px] opacity-40 z-0"></div>
+
+    <!-- Auth Card -->
+    <main class="w-full max-w-[440px] bg-surface-container-lowest rounded-xl shadow-lg z-10 relative overflow-hidden flex flex-col p-6">
+        <!-- Logo -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center mb-2 text-on-primary">
+                <span class="material-symbols-outlined" style="font-size: 28px;">confirmation_number</span>
+            </div>
+            <h1 class="text-2xl font-bold text-primary mb-1">VoucherHub</h1>
+            <p class="text-sm text-on-surface-variant">Nền tảng mua sắm voucher uy tín</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-outline-variant/30 mb-6">
+            <button class="flex-1 pb-3 text-center font-semibold border-b-2 border-primary text-primary" id="tab-btn-login" onclick="switchTab('login')">
+                Đăng nhập
+            </button>
+            <button class="flex-1 pb-3 text-center text-on-surface-variant border-b-2 border-transparent" id="tab-btn-register" onclick="switchTab('register')">
+                Đăng ký
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <form class="tab-content active flex flex-col gap-4" id="form-login">
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="login-username">Email đăng nhập</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">person</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="login-username" placeholder="nguyenvana@gmail.com" type="email" required/>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="login-password">Mật khẩu</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="login-password" placeholder="••••••" type="password" required/>
+                </div>
+            </div>
+            <button class="w-full mt-2 h-11 bg-primary text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary-container active:scale-[0.98] transition-all shadow-sm" type="submit">
+                <span>Đăng nhập</span>
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+        </form>
+
+        <!-- Register Form -->
+        <form class="tab-content flex flex-col gap-4" id="form-register">
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="reg-email">Email</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">mail</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="reg-email" placeholder="example@gmail.com" type="email" required/>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="reg-password">Mật khẩu</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">lock</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="reg-password" placeholder="Tối thiểu 6 ký tự" type="password" required minlength="6"/>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="reg-name">Họ và tên</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">person</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="reg-name" placeholder="Nguyễn Văn A" type="text" required/>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="reg-sdt">Số điện thoại</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">phone</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="reg-sdt" placeholder="0901234567" type="tel"/>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-on-surface" for="reg-address">Địa chỉ</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">location_on</span>
+                    <input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="reg-address" placeholder="Quận 1, TP.HCM" type="text"/>
+                </div>
+            </div>
+            <button class="w-full mt-2 h-11 bg-secondary text-white rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm" type="submit">
+                <span>Đăng ký tài khoản</span>
+                <span class="material-symbols-outlined text-[18px]">person_add</span>
+            </button>
+        </form>
+    </main>
+
+    <!-- Import logic APIs -->
+    <script src="js/api.js"></script>
+    <script>
+        // Kiểm tra nếu đã login thì chuyển sang trang chủ
+        if (Auth.isLoggedIn()) {
+            window.location.href = 'home.html';
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const btnLogin = document.getElementById('tab-btn-login');
+            const btnRegister = document.getElementById('tab-btn-register');
+            
+            btnLogin.className = "flex-1 pb-3 text-center text-on-surface-variant border-b-2 border-transparent";
+            btnRegister.className = "flex-1 pb-3 text-center text-on-surface-variant border-b-2 border-transparent";
+            
+            document.getElementById('form-' + tabId).classList.add('active');
+            const activeBtn = document.getElementById('tab-btn-' + tabId);
+            activeBtn.className = "flex-1 pb-3 text-center font-semibold border-b-2 border-primary text-primary";
+        }
+
+        // Đăng nhập
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await apiFetch('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+
+                Auth.setSession(res.access_token, res.user);
+                showToast('Đăng nhập thành công!', 'success');
+                setTimeout(() => window.location.href = 'home.html', 1000);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // Đăng ký
+        document.getElementById('form-register').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const ho_ten = document.getElementById('reg-name').value;
+            const sdt = document.getElementById('reg-sdt').value || undefined;
+            const dia_chi = document.getElementById('reg-address').value || undefined;
+
+            try {
+                const res = await apiFetch('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password, ho_ten, sdt, dia_chi })
+                });
+
+                showToast(res.message, 'success');
+                // Tự động điền email vừa đăng ký vào ô đăng nhập và chuyển tab
+                document.getElementById('login-username').value = email;
+                switchTab('login');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

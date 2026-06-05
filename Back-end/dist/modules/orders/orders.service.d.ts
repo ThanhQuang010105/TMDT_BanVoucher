@@ -1,0 +1,109 @@
+import { SupabaseService } from '../../supabase/supabase.service';
+import { AddToCartDto } from './dto/add-to-cart.dto';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateReviewDto } from './dto/create-review.dto';
+export declare class OrdersService {
+    private readonly supabaseService;
+    constructor(supabaseService: SupabaseService);
+    private getKhachHang;
+    getCart(accessToken: string): Promise<{
+        data: {
+            ma_ctgh: any;
+            so_luong_mua: any;
+            voucher: {
+                ma_voucher: any;
+                ten_voucher: any;
+                gia_goc: any;
+                gia_ban: any;
+                ngay_kt: any;
+                so_luong_phat_hanh: any;
+                so_luong_da_ban: any;
+            }[];
+        }[];
+        tong_tien: number;
+    }>;
+    addToCart(accessToken: string, dto: AddToCartDto): Promise<{
+        message: string;
+    }>;
+    removeFromCart(accessToken: string, maCtgh: string): Promise<{
+        message: string;
+    }>;
+    createOrder(accessToken: string, dto: CreateOrderDto): Promise<{
+        message: string;
+        ma_dh: string;
+        tong_tien: number;
+        so_voucher_code_phat_hanh: number;
+    }>;
+    getMyVouchers(accessToken: string, trang_thai?: string): Promise<{
+        data: {
+            ma_voucher_code: any;
+            trang_thai: any;
+            ngay_su_dung: any;
+            chuoi_ma_bao_mat: any;
+            voucher: {
+                ma_voucher: any;
+                ten_voucher: any;
+                gia_ban: any;
+                ngay_kt: any;
+                doi_tac: {
+                    ten_doanh_nghiep: any;
+                }[];
+            }[];
+            don_hang: {
+                ma_dh: any;
+                ngay_tao_don: any;
+            }[];
+        }[];
+    }>;
+    getVoucherCodeDetail(accessToken: string, maVoucherCode: string): Promise<{
+        data: {
+            ma_voucher_code: any;
+            trang_thai: any;
+            ngay_su_dung: any;
+            chuoi_ma_bao_mat: any;
+            voucher: {
+                ma_voucher: any;
+                ten_voucher: any;
+                gia_goc: any;
+                gia_ban: any;
+                ngay_kt: any;
+                mo_ta: any;
+                doi_tac: {
+                    ten_doanh_nghiep: any;
+                }[];
+                chi_nhanh: {
+                    chi_nhanh: {
+                        ten_chi_nhanh: any;
+                        dia_chi: any;
+                    }[];
+                }[];
+            }[];
+            don_hang: {
+                ma_dh: any;
+                ngay_tao_don: any;
+                phuong_thuc_thanh_toan: any;
+            }[];
+        };
+    }>;
+    createReview(accessToken: string, dto: CreateReviewDto): Promise<{
+        message: string;
+        ma_dg: string;
+    }>;
+    getOrderHistory(accessToken: string): Promise<{
+        data: {
+            ma_dh: any;
+            ten_don_hang: any;
+            tong_tien: any;
+            phuong_thuc_thanh_toan: any;
+            trang_thai_thanh_toan: any;
+            ngay_tao_don: any;
+            chi_tiet_don_hang: {
+                so_luong_mua: any;
+                don_gia_mua: any;
+                voucher: {
+                    ten_voucher: any;
+                }[];
+            }[];
+        }[];
+    }>;
+}

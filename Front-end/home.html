@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Trang chủ - VoucherHub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#434655",
+                      "surface": "#f8f9ff",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "outline-variant": "#c3c6d7",
+                      "outline": "#737686",
+                      "surface-bright": "#f8f9ff",
+                      "primary-container": "#2563eb",
+                      "surface-container-high": "#dce9ff",
+                      "on-secondary-fixed-variant": "#005236",
+                      "inverse-on-surface": "#eaf1ff",
+                      "background": "#f8f9ff",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-variant": "#d3e4fe",
+                      "on-tertiary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "inverse-surface": "#213145",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#2a1700",
+                      "tertiary-fixed": "#ffddb8",
+                      "tertiary": "#784b00",
+                      "inverse-primary": "#b4c5ff",
+                      "on-error-container": "#93000a",
+                      "on-background": "#0b1c30",
+                      "surface-dim": "#cbdbf5",
+                      "surface-container-low": "#eff4ff",
+                      "primary": "#004ac6",
+                      "surface-container-highest": "#d3e4fe",
+                      "error-container": "#ffdad6",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#4edea3",
+                      "on-surface": "#0b1c30",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "secondary": "#006c49",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-secondary-container": "#00714d",
+                      "secondary-container": "#6cf8bb",
+                      "on-primary-fixed": "#00174b",
+                      "on-secondary-fixed": "#002113",
+                      "surface-tint": "#0053db",
+                      "on-tertiary-container": "#ffeedd",
+                      "surface-container": "#e5eeff",
+                      "primary-fixed": "#dbe1ff",
+                      "error": "#ba1a1a",
+                      "tertiary-container": "#996100",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-primary-container": "#eeefff"
+              }
+            }
+          }
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-sans antialiased min-h-screen flex flex-col">
+    <!-- TopNavBar Component -->
+    <header class="bg-white shadow-sm fixed top-0 left-0 w-full z-50 flex items-center h-16 border-b border-outline-variant/30">
+        <div class="w-full max-w-[1280px] mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <a class="text-xl font-bold text-primary" href="home.html">VoucherHub</a>
+                <div class="hidden md:flex relative w-80">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+                    <input id="search-input" class="w-full bg-surface-container-low border border-outline-variant rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Tìm kiếm voucher..." type="text"/>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-primary border-b-2 border-primary pb-1 font-semibold text-sm" href="home.html">Trang chủ</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="wallet.html">Ví Voucher</a>
+            </nav>
+            
+            <div class="flex items-center gap-4">
+                <button class="text-on-surface-variant hover:text-primary transition-colors relative" onclick="window.location.href='wallet.html'">
+                    <span class="material-symbols-outlined">confirmation_number</span>
+                </button>
+                <div class="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-outline-variant" onclick="window.location.href='profile.html'">
+                    <img id="nav-avatar" alt="User Profile Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYyDS7WVb__iZiLCmeWtiABRQWW4MLkC0dYzZLlS-EKgTk1__5gjIG5jPTuHHJeqUrkqoIYW2teLTJWMnnC8tfyVNl1VhliYokzGTdBeV1Mqz9RQeMCz1eGhwIokkwbc9a23JKMRuEnD4Zqw-UdlDzPJO1HeZ7OlRrpHOotrk8ziTJ0JyQO-bijb9VG7oW_NjkxZqqpMrY9RCL8RmM5f8ke2tndGc1C6mw1JEBLD0egFfBCJYpgbveewLzG4PIEoNK8MzNxJlVAoU"/>
+                </div>
+                <button class="text-sm font-semibold text-error flex items-center gap-1 hover:underline" onclick="logoutUser()">
+                    <span class="material-symbols-outlined text-[18px]">logout</span> Đăng xuất
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-24 pb-12 px-6 max-w-[1280px] mx-auto w-full">
+        <!-- Hero Banner -->
+        <section class="mb-8 rounded-xl overflow-hidden shadow-sm relative h-48 md:h-64 bg-slate-800">
+            <div class="absolute inset-0 bg-gradient-to-r from-on-background/80 to-transparent flex items-center p-8 z-10">
+                <div class="max-w-lg text-white">
+                    <h1 class="text-3xl font-bold mb-2">Siêu Sale Giữa Tháng</h1>
+                    <p class="text-sm text-surface-container-highest mb-4">Giảm tới 50% cho các dịch vụ Buffet Ăn uống, Spa trị liệu & Giải trí.</p>
+                    <button class="bg-primary text-white font-semibold px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity">Mua Ngay</button>
+                </div>
+            </div>
+            <img class="absolute inset-0 w-full h-full object-cover opacity-60" src="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80"/>
+        </section>
+
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Sidebar Filters -->
+            <aside class="w-full md:w-64 flex-shrink-0">
+                <div class="bg-white rounded-xl p-5 shadow-sm border border-outline-variant/30 sticky top-24">
+                    <h2 class="text-lg font-bold mb-4 border-b border-outline-variant/30 pb-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined">filter_alt</span> Bộ lọc
+                    </h2>
+                    
+                    <!-- Categories filter -->
+                    <div class="mb-6">
+                        <h3 class="font-bold text-sm mb-3 text-on-surface-variant">Danh mục</h3>
+                        <div id="category-filter-list" class="space-y-2 text-sm">
+                            <!-- Categories checkbox dynamically loaded here -->
+                            <div class="text-outline">Đang tải danh mục...</div>
+                        </div>
+                    </div>
+
+                    <!-- Price Filter -->
+                    <div>
+                        <h3 class="font-bold text-sm mb-3 text-on-surface-variant">Khoảng giá</h3>
+                        <input id="price-range" class="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary" max="1000000" min="0" step="50000" type="range" value="1000000"/>
+                        <div class="flex justify-between mt-2 text-xs font-semibold text-outline">
+                            <span>0đ</span>
+                            <span id="price-display">Tất cả</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Voucher Grid Area -->
+            <section class="flex-grow">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-on-surface" id="grid-title">Voucher Nổi Bật</h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-outline font-semibold">Bộ lọc:</span>
+                        <select id="sort-select" class="bg-white border border-outline-variant rounded-lg py-1 px-3 text-sm focus:border-primary focus:ring-0 focus:outline-none">
+                            <option value="newest">Mới nhất</option>
+                            <option value="best_seller">Bán chạy</option>
+                            <option value="price_asc">Giá từ thấp - cao</option>
+                            <option value="price_desc">Giá từ cao - thấp</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div id="voucher-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Cards will be dynamically generated here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-auto border-t border-outline-variant/30 py-8 px-6">
+        <div class="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <span class="font-bold text-lg text-primary">VoucherHub</span>
+                <p class="text-xs text-on-surface-variant mt-1">© 2026 VoucherHub. All rights reserved.</p>
+            </div>
+            <div class="flex gap-4 text-xs text-on-surface-variant">
+                <a class="hover:underline" href="#">Điều khoản</a>
+                <a class="hover:underline" href="#">Bảo mật</a>
+                <a class="hover:underline" href="#">Hỗ trợ</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        // Bảo vệ route: Yêu cầu đăng nhập trước
+        Auth.requireAuth();
+
+        // Biến toàn cục lưu trạng thái bộ lọc
+        let selectedCategory = '';
+        let currentKeyword = '';
+        let maxPrice = 1000000;
+        let sortOption = 'newest';
+
+        // Load dữ liệu ban đầu
+        window.addEventListener('DOMContentLoaded', () => {
+            // Hiển thị email hoặc avatar nếu có
+            const user = Auth.getUser();
+            if (user) {
+                // Có thể cập nhật giao diện dựa trên user ở đây
+            }
+            loadCategories();
+            loadHomepageData();
+        });
+
+        // Đăng xuất
+        async function logoutUser() {
+            try {
+                await apiFetch('/api/auth/logout', { method: 'POST' });
+            } catch (e) {
+                // Bỏ qua lỗi logout nếu token hết hạn
+            }
+            Auth.clear();
+            window.location.href = 'index.html';
+        }
+
+        // Tải danh sách danh mục làm bộ lọc
+        async function loadCategories() {
+            try {
+                const res = await apiFetch('/api/vouchers/categories');
+                const container = document.getElementById('category-filter-list');
+                
+                // Chỉ lấy các danh mục cha (ma_taxon_cha === null)
+                const parentCategories = res.data.filter(c => !c.ma_taxon_cha);
+
+                let html = `<label class="flex items-center gap-2 cursor-pointer py-1 font-semibold text-primary">
+                    <input type="radio" name="category" value="" checked class="rounded-full text-primary focus:ring-primary border-outline-variant" onchange="filterByCategory('')"/>
+                    <span>Tất cả</span>
+                </label>`;
+
+                parentCategories.forEach(cat => {
+                    html += `
+                    <label class="flex items-center gap-2 cursor-pointer py-1">
+                        <input type="radio" name="category" value="${cat.ma_taxon}" class="rounded-full text-primary focus:ring-primary border-outline-variant" onchange="filterByCategory('${cat.ma_taxon}')"/>
+                        <span>${cat.ten_taxon}</span>
+                    </label>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Không thể tải danh mục:', err);
+            }
+        }
+
+        // Tải dữ liệu mặc định (homepage)
+        async function loadHomepageData() {
+            try {
+                const res = await apiFetch('/api/vouchers/homepage');
+                renderVouchers(res.featured_vouchers);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Thực hiện tìm kiếm và lọc voucher qua API /api/vouchers
+        async function fetchFilteredVouchers() {
+            try {
+                const queryParams = new URLSearchParams({
+                    keyword: currentKeyword,
+                    ma_taxon: selectedCategory,
+                    gia_max: maxPrice,
+                    limit: 20
+                });
+                
+                const res = await apiFetch(`/api/vouchers?${queryParams.toString()}`);
+                
+                // Thực hiện sắp xếp phía client nếu cần
+                let sortedList = res.data || [];
+                if (sortOption === 'price_asc') {
+                    sortedList.sort((a, b) => a.gia_ban - b.gia_ban);
+                } else if (sortOption === 'price_desc') {
+                    sortedList.sort((a, b) => b.gia_ban - a.gia_ban);
+                }
+                
+                renderVouchers(sortedList);
+                document.getElementById('grid-title').textContent = selectedCategory ? 'Kết quả tìm lọc' : 'Voucher Nổi Bật';
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function filterByCategory(maTaxon) {
+            selectedCategory = maTaxon;
+            fetchFilteredVouchers();
+        }
+
+        // Lọc theo khoảng giá
+        const priceRangeInput = document.getElementById('price-range');
+        const priceDisplay = document.getElementById('price-display');
+        priceRangeInput.addEventListener('input', (e) => {
+            maxPrice = parseInt(e.target.value);
+            priceDisplay.textContent = maxPrice === 1000000 ? 'Tất cả' : formatCurrency(maxPrice);
+        });
+        priceRangeInput.addEventListener('change', () => {
+            fetchFilteredVouchers();
+        });
+
+        // Tìm kiếm theo từ khóa (debounce)
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentKeyword = e.target.value.trim();
+                fetchFilteredVouchers();
+            }, 500);
+        });
+
+        // Sắp xếp
+        document.getElementById('sort-select').addEventListener('change', (e) => {
+            sortOption = e.target.value;
+            fetchFilteredVouchers();
+        });
+
+        // Hàm render danh sách voucher
+        function renderVouchers(vouchers) {
+            const container = document.getElementById('voucher-grid');
+            if (!vouchers || vouchers.length === 0) {
+                container.innerHTML = `
+                <div class="col-span-full py-12 text-center text-on-surface-variant flex flex-col items-center">
+                    <span class="material-symbols-outlined text-4xl mb-2">find_in_page</span>
+                    <p>Không tìm thấy voucher phù hợp.</p>
+                </div>`;
+                return;
+            }
+
+            // Danh sách ảnh mẫu ngẫu nhiên cho đẹp mắt
+            const sampleImages = [
+                'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80', // sườn nướng
+                'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80', // spa
+                'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80', // rạp phim
+                'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=400&q=80', // sushi
+            ];
+
+            let html = '';
+            vouchers.forEach((v, idx) => {
+                const conLai = v.so_luong_phat_hanh - v.so_luong_da_ban;
+                const percentSold = Math.round((v.so_luong_da_ban / v.so_luong_phat_hanh) * 100);
+                const discountPercent = Math.round(((v.gia_goc - v.gia_ban) / v.gia_goc) * 100);
+                const voucherImg = sampleImages[idx % sampleImages.length];
+
+                html += `
+                <div class="bg-white rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full group cursor-pointer" onclick="goToDetail('${v.ma_voucher}')">
+                    <div class="relative h-40 overflow-hidden bg-slate-100">
+                        <img alt="${v.ten_voucher}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="${voucherImg}"/>
+                        ${discountPercent > 0 ? `<span class="absolute top-2 left-2 bg-error text-white font-bold text-xs px-2 py-0.5 rounded">- ${discountPercent}%</span>` : ''}
+                    </div>
+                    <div class="p-4 flex-grow flex flex-col">
+                        <h3 class="text-sm font-bold text-on-surface line-clamp-2 mb-1 group-hover:text-primary transition-colors">${v.ten_voucher}</h3>
+                        <p class="text-xs text-outline mb-3 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">storefront</span> 
+                            ${v.doi_tac?.ten_doanh_nghiep || 'Hệ thống'}
+                        </p>
+                        <div class="mt-auto">
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span class="text-base font-bold text-error">${formatCurrency(v.gia_ban)}</span>
+                                <span class="text-xs text-outline line-through">${formatCurrency(v.gia_goc)}</span>
+                            </div>
+                            <div class="relative w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-1">
+                                <div class="absolute top-0 left-0 h-full bg-error" style="width: ${percentSold}%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-outline font-semibold">
+                                <span>Đã bán ${v.so_luong_da_ban}</span>
+                                <span>Còn lại ${conLai}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function goToDetail(maVoucher) {
+            const isWeb = window.location.protocol.startsWith('http');
+            const target = isWeb ? `detail?id=${maVoucher}` : `detail.html?id=${maVoucher}`;
+            window.location.href = target;
+        }
+    </script>
+</body>
+</html>

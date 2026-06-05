@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>VoucherHub - Chi tiết Voucher</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "primary": "#004ac6",
+                "on-primary": "#ffffff",
+                "background": "#f8f9ff",
+                "surface": "#f8f9ff",
+                "on-surface": "#0b1c30",
+                "outline-variant": "#c3c6d7",
+                "outline": "#737686",
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-low": "#eff4ff",
+                "surface-container": "#e5eeff"
+              }
+            }
+          }
+        }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-sans antialiased min-h-screen flex flex-col pt-16">
+    <!-- Header -->
+    <header class="bg-white shadow-sm fixed top-0 left-0 w-full z-50 flex items-center h-16 border-b border-outline-variant/30">
+        <div class="w-full max-w-[1280px] mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <a class="text-xl font-bold text-primary" href="home.html">VoucherHub</a>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="home.html">Trang chủ</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="wallet.html">Ví Voucher</a>
+            </nav>
+            
+            <div class="flex items-center gap-4">
+                <button class="text-on-surface-variant hover:text-primary transition-colors relative" onclick="toggleCartDrawer()">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span id="cart-badge" class="absolute -top-2 -right-2 bg-error text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center hidden">0</span>
+                </button>
+                <div class="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-outline-variant" onclick="window.location.href='profile.html'">
+                    <img id="nav-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxYyDS7WVb__iZiLCmeWtiABRQWW4MLkC0dYzZLlS-EKgTk1__5gjIG5jPTuHHJeqUrkqoIYW2teLTJWMnnC8tfyVNl1VhliYokzGTdBeV1Mqz9RQeMCz1eGhwIokkwbc9a23JKMRuEnD4Zqw-UdlDzPJO1HeZ7OlRrpHOotrk8ziTJ0JyQO-bijb9VG7oW_NjkxZqqpMrY9RCL8RmM5f8ke2tndGc1C6mw1JEBLD0egFfBCJYpgbveewLzG4PIEoNK8MzNxJlVAoU"/>
+                </div>
+                <a class="text-sm font-semibold text-primary" href="home.html">Quay lại</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-[1280px] mx-auto w-full px-6 py-8">
+        <!-- Breadcrumbs -->
+        <nav class="flex gap-2 text-xs text-outline mb-6">
+            <a class="hover:text-primary" href="home.html">Trang chủ</a>
+            <span>/</span>
+            <span id="breadcrumb-category">Đang tải...</span>
+            <span>/</span>
+            <span id="breadcrumb-title" class="text-on-surface font-semibold">Đang tải...</span>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column: Media & Details -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
+                <!-- Voucher Image Bento -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-[350px]">
+                    <div class="md:col-span-2 rounded-xl overflow-hidden bg-slate-100 relative">
+                        <img id="detail-img-main" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80" alt="Main image"/>
+                    </div>
+                    <div class="hidden md:flex flex-col gap-4">
+                        <div class="h-[167px] rounded-xl overflow-hidden bg-slate-100">
+                            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80" alt="Detail image 1"/>
+                        </div>
+                        <div class="h-[167px] rounded-xl overflow-hidden bg-slate-100">
+                            <img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=400&q=80" alt="Detail image 2"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Block -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/30">
+                    <span id="detail-partner-badge" class="bg-primary-container/10 text-primary text-xs font-bold px-2.5 py-1 rounded-full mb-3 inline-block">Đang tải...</span>
+                    <h1 id="detail-title" class="text-2xl font-bold mb-2">Đang tải chi tiết voucher...</h1>
+                    
+                    <div class="flex flex-wrap items-center gap-4 text-sm text-outline border-b border-outline-variant/30 pb-4 mb-4">
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-amber-500 fill-current text-[18px]">star</span>
+                            <span id="detail-avg-rating" class="font-bold text-on-surface">5.0</span>
+                            <span id="detail-total-reviews">(0 đánh giá)</span>
+                        </div>
+                        <span>•</span>
+                        <div class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[18px]">sell</span>
+                            <span id="detail-sold-qty">Đã bán 0</span>
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-sm mb-2 text-on-surface-variant">Mô tả sản phẩm</h3>
+                    <p id="detail-desc" class="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
+                        Đang tải mô tả sản phẩm từ hệ thống...
+                    </p>
+                </div>
+
+                <!-- Branch Locations Tab -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/30">
+                    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">location_on</span> Chi nhánh áp dụng
+                    </h3>
+                    <div id="branch-list" class="space-y-4 max-h-60 overflow-y-auto pr-2">
+                        <!-- Branches dynamically loaded -->
+                    </div>
+                </div>
+
+                <!-- Customer Reviews -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/30">
+                    <h3 class="font-bold text-base mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">rate_review</span> Đánh giá từ khách hàng
+                    </h3>
+                    <div id="review-list" class="space-y-4">
+                        <!-- Reviews dynamically loaded -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Purchasing Block -->
+            <div class="lg:col-span-4">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-outline-variant/30 sticky top-24">
+                    <div class="bg-error/5 text-error rounded-lg p-3 mb-4 text-xs flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">alarm</span>
+                        <span>Thời hạn áp dụng đến: <strong id="detail-expiry">Đang tải...</strong></span>
+                    </div>
+
+                    <!-- Price block -->
+                    <div class="mb-6">
+                        <div class="text-xs text-outline font-semibold mb-1">Giá bán độc quyền</div>
+                        <div class="flex items-baseline gap-2">
+                            <span id="detail-price-ban" class="text-3xl font-extrabold text-error">0đ</span>
+                            <span id="detail-price-goc" class="text-sm text-outline line-through">0đ</span>
+                        </div>
+                    </div>
+
+                    <!-- Quantity Counter -->
+                    <div class="mb-6 flex items-center justify-between">
+                        <span class="text-sm font-semibold text-on-surface-variant">Chọn số lượng:</span>
+                        <div class="flex items-center border border-outline-variant rounded-lg overflow-hidden bg-surface-container-lowest">
+                            <button class="px-3 py-1.5 hover:bg-slate-100 font-semibold" onclick="adjustQty(-1)">-</button>
+                            <input id="buy-qty" class="w-12 text-center border-none focus:ring-0 text-sm font-bold bg-transparent" type="number" value="1" min="1" readonly/>
+                            <button class="px-3 py-1.5 hover:bg-slate-100 font-semibold" onclick="adjustQty(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-outline mb-4 text-right font-semibold">
+                        Còn lại: <span id="detail-ton-kho" class="text-on-surface">0</span> voucher trong kho
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col gap-3">
+                        <button class="w-full h-11 border border-primary text-primary font-bold rounded-lg hover:bg-primary/5 transition-colors active:scale-[0.98]" onclick="handleAddToCart()">
+                            Thêm vào giỏ
+                        </button>
+                        <button class="w-full h-11 bg-primary text-white font-bold rounded-lg hover:opacity-95 transition-opacity active:scale-[0.98]" onclick="handleBuyNow()">
+                            Mua ngay
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Drawer Container -->
+    <div id="cart-drawer" class="fixed inset-y-0 right-0 w-full max-w-[400px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 border-l border-outline-variant/30 flex flex-col">
+        <div class="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+            <h3 class="font-bold text-lg text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined">shopping_cart</span> Giỏ hàng của bạn
+            </h3>
+            <button class="material-symbols-outlined text-outline hover:text-on-surface" onclick="toggleCartDrawer()">close</button>
+        </div>
+        <div id="cart-items-container" class="flex-grow overflow-y-auto p-4 space-y-4">
+            <!-- Cart items dynamically rendered -->
+        </div>
+        <div class="p-4 border-t border-outline-variant/30 bg-surface-container-lowest">
+            <!-- Payment simulation picker -->
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-outline mb-2">PHƯƠNG THỨC THANH TOÁN (MÔ PHỎNG)</label>
+                <select id="payment-method" class="w-full bg-white border border-outline-variant rounded-lg py-2 px-3 text-sm focus:outline-none">
+                    <option value="chuyen_khoan">Chuyển khoản Ngân hàng (Simulation)</option>
+                    <option value="vi_dien_tu">Ví điện tử MoMo/ZaloPay (Simulation)</option>
+                    <option value="tien_mat">Thanh toán tiền mặt tại quầy (Simulation)</option>
+                </select>
+            </div>
+            <div class="flex justify-between items-baseline mb-4">
+                <span class="text-sm font-semibold">Tổng tiền thanh toán:</span>
+                <span id="cart-total-price" class="text-xl font-bold text-error">0đ</span>
+            </div>
+            <button class="w-full h-11 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2" onclick="handleCheckout()">
+                <span>Xác nhận & Thanh toán ngay</span>
+                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Cart Drawer Backdrop overlay -->
+    <div id="cart-backdrop" class="fixed inset-0 bg-black/40 z-40 hidden" onclick="toggleCartDrawer()"></div>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-auto border-t border-outline-variant/30 py-6 px-6">
+        <div class="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-on-surface-variant">
+            <span>© 2026 VoucherHub. Bảo lưu mọi quyền.</span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script>
+        Auth.requireAuth();
+
+        let maVoucher = '';
+        let voucherStock = 0;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            maVoucher = params.get('id');
+            if (!maVoucher) {
+                window.location.href = 'home.html';
+                return;
+            }
+            loadVoucherDetail();
+            loadCart();
+        });
+
+        // Tăng giảm số lượng mua
+        function adjustQty(amount) {
+            const input = document.getElementById('buy-qty');
+            let current = parseInt(input.value);
+            let target = current + amount;
+            if (target >= 1 && target <= voucherStock) {
+                input.value = target;
+            }
+        }
+
+        // Tải chi tiết Voucher
+        async function loadVoucherDetail() {
+            try {
+                const res = await apiFetch(`/api/vouchers/${maVoucher}`);
+                const v = res.data;
+                voucherStock = v.ton_kho;
+
+                // Cập nhật thông tin giao diện
+                document.getElementById('breadcrumb-category').textContent = v.danh_muc?.ten_taxon || 'Khác';
+                document.getElementById('breadcrumb-title').textContent = v.ten_voucher;
+                document.getElementById('detail-title').textContent = v.ten_voucher;
+                document.getElementById('detail-partner-badge').textContent = v.doi_tac?.ten_doanh_nghiep || 'Hệ thống';
+                document.getElementById('detail-avg-rating').textContent = v.diem_trung_binh || '5.0';
+                document.getElementById('detail-total-reviews').textContent = `(${v.so_luong_danh_gia} đánh giá)`;
+                document.getElementById('detail-sold-qty').textContent = `Đã bán ${v.so_luong_da_ban}`;
+                document.getElementById('detail-desc').textContent = v.mo_ta;
+                document.getElementById('detail-price-ban').textContent = formatCurrency(v.gia_ban);
+                document.getElementById('detail-price-goc').textContent = formatCurrency(v.gia_goc);
+                document.getElementById('detail-ton-kho').textContent = v.ton_kho;
+                document.getElementById('detail-expiry').textContent = formatDate(v.ngay_kt);
+
+                // Load chi nhánh
+                const branchList = document.getElementById('branch-list');
+                if (v.chi_nhanh && v.chi_nhanh.length > 0) {
+                    let branchHtml = '';
+                    v.chi_nhanh.forEach(cn => {
+                        branchHtml += `
+                        <div class="border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
+                            <h4 class="font-semibold text-sm text-on-surface mb-0.5">${cn.ten_chi_nhanh}</h4>
+                            <p class="text-xs text-outline flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">location_on</span> ${cn.dia_chi}
+                            </p>
+                        </div>
+                        `;
+                    });
+                    branchList.innerHTML = branchHtml;
+                } else {
+                    branchList.innerHTML = `<p class="text-xs text-outline">Áp dụng trên toàn bộ hệ thống đại lý.</p>`;
+                }
+
+                // Load đánh giá
+                const reviewList = document.getElementById('review-list');
+                if (v.danh_gia && v.danh_gia.length > 0) {
+                    let reviewHtml = '';
+                    v.danh_gia.forEach(dg => {
+                        reviewHtml += `
+                        <div class="border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-xs text-on-surface">${dg.khach_hang?.ho_ten || 'Khách hàng ẩn danh'}</span>
+                                <span class="text-[10px] text-outline">${formatDate(dg.ngay_danh_gia)}</span>
+                            </div>
+                            <div class="flex gap-0.5 mb-1">
+                                ${Array.from({ length: 5 }).map((_, i) => `
+                                    <span class="material-symbols-outlined text-[14px] ${i < dg.diem_so_dg ? 'text-amber-500 fill-current' : 'text-slate-300'}">star</span>
+                                `).join('')}
+                            </div>
+                            <p class="text-xs text-on-surface-variant">${dg.noi_dung_binh_luan || 'Không có bình luận.'}</p>
+                        </div>
+                        `;
+                    });
+                    reviewList.innerHTML = reviewHtml;
+                } else {
+                    reviewList.innerHTML = `<p class="text-xs text-outline">Voucher này chưa có đánh giá nào.</p>`;
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Drawer Giỏ Hàng
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cart-drawer');
+            const backdrop = document.getElementById('cart-backdrop');
+            drawer.classList.toggle('translate-x-full');
+            backdrop.classList.toggle('hidden');
+        }
+
+        // Tải giỏ hàng
+        async function loadCart() {
+            try {
+                const res = await apiFetch('/api/orders/cart');
+                const badge = document.getElementById('cart-badge');
+                const container = document.getElementById('cart-items-container');
+                const totalText = document.getElementById('cart-total-price');
+
+                if (res.data.length > 0) {
+                    badge.textContent = res.data.length;
+                    badge.classList.remove('hidden');
+                    
+                    let html = '';
+                    res.data.forEach(item => {
+                        html += `
+                        <div class="flex gap-3 bg-slate-50 p-3 rounded-lg border border-outline-variant/20 relative group">
+                            <div class="flex-grow">
+                                <h4 class="font-bold text-xs text-on-surface line-clamp-1 mb-1">${item.voucher.ten_voucher}</h4>
+                                <div class="text-[10px] text-outline mb-2">Số lượng mua: <strong class="text-on-surface">${item.so_luong_mua}</strong></div>
+                                <div class="text-xs font-bold text-error">${formatCurrency(item.voucher.gia_ban * item.so_luong_mua)}</div>
+                            </div>
+                            <button class="absolute top-2 right-2 text-outline hover:text-error opacity-0 group-hover:opacity-100 transition-opacity" onclick="removeFromCart('${item.ma_ctgh}')">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    totalText.textContent = formatCurrency(res.tong_tien);
+                } else {
+                    badge.classList.add('hidden');
+                    container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-outline text-xs py-12">
+                        <span class="material-symbols-outlined text-4xl mb-2">shopping_bag</span>
+                        Giỏ hàng của bạn đang trống
+                    </div>`;
+                    totalText.textContent = '0đ';
+                }
+            } catch (err) {
+                console.error('Không tải được giỏ hàng:', err);
+            }
+        }
+
+        // Xóa item khỏi giỏ
+        async function removeFromCart(maCtgh) {
+            try {
+                await apiFetch(`/api/orders/cart/${maCtgh}`, { method: 'DELETE' });
+                showToast('Đã xóa khỏi giỏ hàng.', 'success');
+                loadCart();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Thêm vào giỏ hàng
+        async function handleAddToCart() {
+            const qty = parseInt(document.getElementById('buy-qty').value);
+            try {
+                const res = await apiFetch('/api/orders/cart', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        ma_voucher: maVoucher,
+                        so_luong_mua: qty
+                    })
+                });
+                showToast(res.message, 'success');
+                loadCart();
+                toggleCartDrawer(); // mở giỏ hàng xem luôn
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Mua ngay
+        async function handleBuyNow() {
+            const qty = parseInt(document.getElementById('buy-qty').value);
+            try {
+                // 1. Thêm vào giỏ
+                await apiFetch('/api/orders/cart', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        ma_voucher: maVoucher,
+                        so_luong_mua: qty
+                    })
+                });
+                
+                // 2. Load lại giỏ
+                await loadCart();
+                
+                // 3. Mở giỏ hàng và thanh toán ngay
+                toggleCartDrawer();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Đặt hàng
+        async function handleCheckout() {
+            const method = document.getElementById('payment-method').value;
+            try {
+                const res = await apiFetch('/api/orders', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        phuong_thuc_thanh_toan: method,
+                        ten_don_hang: `Mua hàng trên VoucherHub`
+                    })
+                });
+
+                showToast('Thanh toán thành công! Đang chuyển đến ví...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'wallet.html';
+                }, 1500);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
