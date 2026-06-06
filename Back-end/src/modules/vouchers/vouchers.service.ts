@@ -23,7 +23,7 @@ export class VouchersService {
       .from('voucher')
       .select(`
         ma_voucher, ten_voucher, mo_ta, gia_goc, gia_ban,
-        so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt,
+        so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt, link_voucher_banner,
         doi_tac ( ten_doanh_nghiep )
       `)
       .eq('trang_thai', 'active')
@@ -51,7 +51,7 @@ export class VouchersService {
       .from('voucher')
       .select(
         `ma_voucher, ten_voucher, mo_ta, gia_goc, gia_ban,
-         so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt,
+         so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt, link_voucher_banner,
          doi_tac ( ma_dt, ten_doanh_nghiep ),
          danh_muc ( ma_taxon, ten_taxon )`,
         { count: 'exact' },
@@ -108,7 +108,7 @@ export class VouchersService {
       .from('voucher')
       .select(`
         ma_voucher, ten_voucher, mo_ta, gia_goc, gia_ban,
-        so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt, trang_thai,
+        so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt, trang_thai, link_voucher_banner,
         doi_tac ( ma_dt, ten_doanh_nghiep, nguoi_dai_dien ),
         danh_muc ( ma_taxon, ten_taxon ),
         phan_loai ( ma_pl, ten_loai_voucher )

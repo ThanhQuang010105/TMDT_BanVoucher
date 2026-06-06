@@ -19,6 +19,8 @@ DROP TABLE IF EXISTS public.doi_tac CASCADE;
 DROP TABLE IF EXISTS public.khach_hang CASCADE;
 DROP TABLE IF EXISTS public.nhat_ky_he_thong CASCADE;
 DROP TABLE IF EXISTS public.tai_khoan CASCADE;
+DROP TABLE IF EXISTS public.voucher_chi_nhanh CASCADE;
+DROP TABLE IF EXISTS public.dieu_kien_ap_dung CASCADE;
 
 -- =========================================================================
 -- TẠO BẢNG & KHÓA CHÍNH (PRIMARY KEYS), KHÓA NGOẠI (FOREIGN KEYS)
@@ -131,6 +133,7 @@ CREATE TABLE public.voucher (
     ngay_bd timestamptz NOT NULL,
     ngay_kt timestamptz NOT NULL,
     trang_thai text,
+    link_voucher_banner text,
     CONSTRAINT fk_voucher_doitac FOREIGN KEY (ma_dt) REFERENCES public.doi_tac(ma_dt) ON DELETE CASCADE,
     CONSTRAINT fk_voucher_phanloai FOREIGN KEY (ma_pl) REFERENCES public.phan_loai(ma_pl) ON DELETE RESTRICT,
     CONSTRAINT fk_voucher_danhmuc FOREIGN KEY (ma_taxon) REFERENCES public.danh_muc(ma_taxon) ON DELETE RESTRICT
@@ -216,10 +219,29 @@ CREATE TABLE public.lich_su_giao_dich (
     trang_thai_thanh_toan text,
     ma_giao_dich_cung_cap text,
     ma_loi text,
-    thoi_ gian_thuc_hien timestamptz DEFAULT now() NOT NULL,
+    thoi_gian_thuc_hien timestamptz DEFAULT now() NOT NULL,
     CONSTRAINT fk_lsgd_donhang FOREIGN KEY (ma_dh) REFERENCES public.don_hang(ma_dh) ON DELETE CASCADE
 );
 
+-- 18. VOUCHER_CHINHANH_AP_DUNG
+CREATE TABLE public.voucher_chi_nhanh (
+    ma_voucher text NOT NULL,
+    ma_cn text NOT NULL,
+    PRIMARY KEY (ma_voucher, ma_cn),
+    CONSTRAINT fk_vcn_voucher FOREIGN KEY (ma_voucher) REFERENCES voucher(ma_voucher),
+    CONSTRAINT fk_vcn_chinhanh FOREIGN KEY (ma_cn) REFERENCES chi_nhanh(ma_cn)
+);
+
+-- 19. DIEU_KIEN_AP_DUNG
+CREATE TABLE public.dieu_kien_ap_dung (
+    ma_dk text PRIMARY KEY,
+    ma_voucher text NOT NULL,
+    gia_tri_don_hang_toi_thieu numeric,
+    so_luong_mua_toi_thieu integer,
+    phuong_thuc_thanh_toan text,
+    ghi_chu text,
+    FOREIGN KEY (ma_voucher) REFERENCES voucher(ma_voucher)
+);
 -- =========================================================================
 -- HÀM HỖ TRỢ (STORED PROCEDURES / FUNCTIONS)
 -- =========================================================================
@@ -242,4 +264,4 @@ BEGIN
         RAISE EXCEPTION 'Voucher % đã hết số lượng hoặc không tồn tại.', p_ma_voucher;
     END IF;
 END;
-$$;
+$$;

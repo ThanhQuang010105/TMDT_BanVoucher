@@ -326,6 +326,8 @@
                 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80', // spa
                 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80', // rạp phim
                 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=400&q=80', // sushi
+                'https://lh7-us.googleusercontent.com/KrOzoAuf_0YBvbEN2Ln5S3E3DpfrfmFcc_gYFJGudVG31ZYlmTd_UIdgRz8qEHwv6LSKe1Xqexy11HPaBuWaAU9m8GPU-SCeP5DE3JVWY1TP82lhdC7YfteIaSYRY_lcjzUx6Cpulk_FTHtHWM1aYoE',//highlands coffe
+                'https://www.cotrang.org/tin-tuc/images/quan-cafe/hoi-an/starbucks/starbucks-hoi-an-ttgt-15.jpg',//starbucks hoi an
             ];
 
             let html = '';
@@ -333,7 +335,8 @@
                 const conLai = v.so_luong_phat_hanh - v.so_luong_da_ban;
                 const percentSold = Math.round((v.so_luong_da_ban / v.so_luong_phat_hanh) * 100);
                 const discountPercent = Math.round(((v.gia_goc - v.gia_ban) / v.gia_goc) * 100);
-                const voucherImg = sampleImages[idx % sampleImages.length];
+                // Sử dụng ảnh từ Supabase (link_voucher_banner), nếu không có mới dùng ảnh mẫu
+                const voucherImg = v.link_voucher_banner || sampleImages[idx % sampleImages.length];
 
                 html += `
                 <div class="bg-white rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full group cursor-pointer" onclick="goToDetail('${v.ma_voucher}')">

@@ -19,6 +19,7 @@ export declare class VouchersService {
             so_luong_da_ban: any;
             ngay_bd: any;
             ngay_kt: any;
+            link_voucher_banner: any;
             doi_tac: {
                 ten_doanh_nghiep: any;
             }[];
@@ -35,6 +36,7 @@ export declare class VouchersService {
             so_luong_da_ban: any;
             ngay_bd: any;
             ngay_kt: any;
+            link_voucher_banner: any;
             doi_tac: {
                 ma_dt: any;
                 ten_doanh_nghiep: any;
@@ -80,6 +82,7 @@ export declare class VouchersService {
             ngay_bd: any;
             ngay_kt: any;
             trang_thai: any;
+            link_voucher_banner: any;
             doi_tac: {
                 ma_dt: any;
                 ten_doanh_nghiep: any;

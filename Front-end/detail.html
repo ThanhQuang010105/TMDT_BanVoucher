@@ -267,6 +267,10 @@
                 document.getElementById('detail-ton-kho').textContent = v.ton_kho;
                 document.getElementById('detail-expiry').textContent = formatDate(v.ngay_kt);
 
+                if (v.link_voucher_banner) {
+                    document.getElementById('detail-img-main').src = v.link_voucher_banner;
+                }
+
                 // Load chi nhánh
                 const branchList = document.getElementById('branch-list');
                 if (v.chi_nhanh && v.chi_nhanh.length > 0) {
