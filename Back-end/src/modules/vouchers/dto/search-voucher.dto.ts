@@ -21,6 +21,10 @@ export class SearchVoucherDto {
   @IsOptional()
   gia_max?: string; // Lọc giá bán tối đa
 
+  @IsString()
+  @IsOptional()
+  hieu_luc?: string; // Lọc theo trạng thái hiệu lực: 'dang_dien_ra' | 'sap_dien_ra' | 'het_han'
+
   @IsNumberString()
   @IsOptional()
   page?: string; // Số trang (mặc định 1)

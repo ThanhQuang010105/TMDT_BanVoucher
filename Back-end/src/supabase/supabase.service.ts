@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SupabaseService implements OnModuleInit {
@@ -39,5 +40,19 @@ export class SupabaseService implements OnModuleInit {
   // Dùng riêng cho Auth operations (signInWithPassword, signOut, signUp)
   getAuthClient(): SupabaseClient {
     return this.authClient;
+  }
+
+  // Ghi nhật ký hệ thống (BR-ADM-07, RB-12)
+  async writeLog(maTk: string, hanhDong: string) {
+    try {
+      const maNk = `NK-${uuidv4().slice(0, 8).toUpperCase()}`;
+      await this.adminClient.from('nhat_ky_he_thong').insert({
+        ma_nk: maNk,
+        ma_tk: maTk,
+        hanh_dong: hanhDong,
+      });
+    } catch (err) {
+      console.error('Lỗi ghi log hệ thống:', err);
+    }
   }
 }

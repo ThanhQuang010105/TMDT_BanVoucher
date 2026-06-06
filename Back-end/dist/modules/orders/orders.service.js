@@ -303,6 +303,137 @@ let OrdersService = class OrdersService {
             throw new common_1.InternalServerErrorException(error.message);
         return { data: data ?? [] };
     }
+    async cancelOrder(accessToken, maDh) {
+        const client = this.supabaseService.getClient();
+        const { data: { user }, error: authError } = await client.auth.getUser(accessToken);
+        if (authError || !user)
+            throw new common_1.UnauthorizedException('Token không hợp lệ hoặc đã hết hạn.');
+        const { data: taiKhoan } = await client
+            .from('tai_khoan')
+            .select('vai_tro')
+            .eq('ma_tk', user.id)
+            .single();
+        const isAdmin = taiKhoan?.vai_tro === 'admin';
+        const { data: order, error: orderError } = await client
+            .from('don_hang')
+            .select('*')
+            .eq('ma_dh', maDh)
+            .single();
+        if (orderError || !order)
+            throw new common_1.NotFoundException('Đơn hàng không tồn tại.');
+        if (!isAdmin) {
+            const { data: kh } = await client
+                .from('khach_hang')
+                .select('ma_kh')
+                .eq('ma_tk', user.id)
+                .single();
+            if (!kh || order.ma_kh !== kh.ma_kh) {
+                throw new common_1.ForbiddenException('Bạn không có quyền hủy đơn hàng này.');
+            }
+        }
+        if (order.trang_thai_thanh_toan === 'da_huy') {
+            throw new common_1.BadRequestException('Đơn hàng đã được hủy trước đó.');
+        }
+        const { data: voucherCodes, error: vcError } = await client
+            .from('voucher_phat_hanh')
+            .select('*')
+            .eq('ma_dh', maDh);
+        if (vcError)
+            throw new common_1.InternalServerErrorException(vcError.message);
+        const hasUsedCode = (voucherCodes ?? []).some((vc) => vc.trang_thai === 'da_su_dung');
+        if (hasUsedCode) {
+            throw new common_1.BadRequestException('Không thể hủy đơn hàng do đã có mã voucher được sử dụng.');
+        }
+        const { error: updateOrderError } = await client
+            .from('don_hang')
+            .update({ trang_thai_thanh_toan: 'da_huy' })
+            .eq('ma_dh', maDh);
+        if (updateOrderError)
+            throw new common_1.InternalServerErrorException(updateOrderError.message);
+        const { error: updateVcError } = await client
+            .from('voucher_phat_hanh')
+            .update({ trang_thai: 'da_huy' })
+            .eq('ma_dh', maDh);
+        if (updateVcError)
+            throw new common_1.InternalServerErrorException(updateVcError.message);
+        const { data: orderDetails } = await client
+            .from('chi_tiet_don_hang')
+            .select('ma_voucher, so_luong_mua')
+            .eq('ma_dh', maDh);
+        for (const detail of orderDetails ?? []) {
+            const { data: v } = await client
+                .from('voucher')
+                .select('so_luong_da_ban')
+                .eq('ma_voucher', detail.ma_voucher)
+                .single();
+            if (v) {
+                await client
+                    .from('voucher')
+                    .update({
+                    so_luong_da_ban: Math.max(0, v.so_luong_da_ban - detail.so_luong_mua),
+                })
+                    .eq('ma_voucher', detail.ma_voucher);
+            }
+        }
+        const maLs = `LS-REFUND-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        const { error: refundError } = await client.from('lich_su_giao_dich').insert({
+            ma_ls: maLs,
+            ma_dh: maDh,
+            so_tien: -Number(order.tong_tien),
+            phuong_thuc_thanh_toan: order.phuong_thuc_thanh_toan,
+            trang_thai_thanh_toan: 'hoan_tien',
+        });
+        if (refundError)
+            throw new common_1.InternalServerErrorException(refundError.message);
+        await this.supabaseService.writeLog(user.id, `Hủy đơn hàng và hoàn tiền: ${maDh}`);
+        return {
+            success: true,
+            message: 'Hủy đơn hàng và hoàn tiền thành công.',
+            ma_ls: maLs,
+        };
+    }
+    async createComplaint(accessToken, dto) {
+        const client = this.supabaseService.getClient();
+        const maKh = await this.getKhachHang(accessToken);
+        const { data: orders } = await client
+            .from('don_hang')
+            .select('ma_dh')
+            .eq('ma_kh', maKh)
+            .eq('trang_thai_thanh_toan', 'thanh_cong');
+        const maDhList = (orders ?? []).map((o) => o.ma_dh);
+        if (maDhList.length === 0) {
+            throw new common_1.ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
+        }
+        const { data: purchaseRecord } = await client
+            .from('voucher_phat_hanh')
+            .select('ma_voucher_code')
+            .eq('ma_voucher', dto.ma_voucher)
+            .in('ma_dh', maDhList)
+            .limit(1)
+            .single();
+        if (!purchaseRecord) {
+            throw new common_1.ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
+        }
+        const maKN = `KN-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        const { data, error } = await client
+            .from('khieu_nai')
+            .insert({
+            ma_kn: maKN,
+            ma_kh: maKh,
+            ma_voucher: dto.ma_voucher,
+            ly_do: dto.ly_do,
+            trang_thai_xl: 'pending',
+        })
+            .select()
+            .single();
+        if (error)
+            throw new common_1.InternalServerErrorException(error.message);
+        return {
+            success: true,
+            data,
+            message: 'Gửi khiếu nại thành công.',
+        };
+    }
 };
 exports.OrdersService = OrdersService;
 exports.OrdersService = OrdersService = __decorate([

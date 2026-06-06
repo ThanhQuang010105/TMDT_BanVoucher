@@ -1,5 +1,8 @@
 import { SupabaseService } from '../../supabase/supabase.service';
 import { SearchVoucherDto } from './dto/search-voucher.dto';
+import { CreateVoucherDto } from './dto/create-voucher.dto';
+import { CreateBranchDto } from './dto/create-branch.dto';
+import { UpdateBranchDto } from './dto/update-branch.dto';
 export declare class VouchersService {
     private readonly supabaseService;
     constructor(supabaseService: SupabaseService);
@@ -106,5 +109,69 @@ export declare class VouchersService {
             ma_taxonomy: any;
             thu_tu_hien_thi: any;
         }[];
+    }>;
+    createVoucher(dto: CreateVoucherDto, userId?: string): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    getAllVouchers(): Promise<{
+        success: boolean;
+        data: any[];
+    }>;
+    private extractPathFromUrl;
+    updateVoucher(id: string, payload: any, userId?: string): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    removeVoucher(id: string, userId?: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    submitVoucher(id: string, userId?: string): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    searchVoucherForAdmin(query: any): Promise<{
+        success: boolean;
+        total: number;
+        data: any[];
+    }>;
+    approveVoucher(id: string, userId?: string): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    rejectVoucher(id: string, userId?: string): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    getBranches(maDT: string): Promise<{
+        success: boolean;
+        data: any[];
+    }>;
+    uploadBanner(file: any): Promise<{
+        success: boolean;
+        data: {
+            bannerUrl: string;
+        };
+        message: string;
+    }>;
+    createBranch(dto: CreateBranchDto): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    updateBranch(maCN: string, dto: UpdateBranchDto): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
+    }>;
+    deleteBranch(maCN: string): Promise<{
+        success: boolean;
+        message: string;
     }>;
 }

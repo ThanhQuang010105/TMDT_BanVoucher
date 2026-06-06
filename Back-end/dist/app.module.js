@@ -14,6 +14,9 @@ const auth_module_1 = require("./modules/auth/auth.module");
 const customers_module_1 = require("./modules/customers/customers.module");
 const vouchers_module_1 = require("./modules/vouchers/vouchers.module");
 const orders_module_1 = require("./modules/orders/orders.module");
+const admin_module_1 = require("./modules/admin/admin.module");
+const cronjob_module_1 = require("./modules/cronjob/cronjob.module");
+const redemption_module_1 = require("./modules/redemption/redemption.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -26,6 +29,9 @@ exports.AppModule = AppModule = __decorate([
             customers_module_1.CustomersModule,
             vouchers_module_1.VouchersModule,
             orders_module_1.OrdersModule,
+            admin_module_1.AdminModule,
+            cronjob_module_1.CronjobModule,
+            redemption_module_1.RedemptionModule,
         ],
         controllers: [],
         providers: [],

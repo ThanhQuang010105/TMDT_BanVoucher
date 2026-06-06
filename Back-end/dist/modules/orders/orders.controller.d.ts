@@ -2,6 +2,7 @@ import { OrdersService } from './orders.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
 export declare class OrdersController {
     private readonly ordersService;
     constructor(ordersService: OrdersService);
@@ -32,6 +33,11 @@ export declare class OrdersController {
         ma_dh: string;
         tong_tien: number;
         so_voucher_code_phat_hanh: number;
+    }>;
+    cancelOrder(token: string, maDh: string): Promise<{
+        success: boolean;
+        message: string;
+        ma_ls: string;
     }>;
     getOrderHistory(token: string): Promise<{
         data: {
@@ -104,5 +110,10 @@ export declare class OrdersController {
     createReview(token: string, dto: CreateReviewDto): Promise<{
         message: string;
         ma_dg: string;
+    }>;
+    createComplaint(token: string, dto: CreateComplaintDto): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
     }>;
 }

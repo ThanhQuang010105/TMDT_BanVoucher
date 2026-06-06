@@ -13,6 +13,7 @@ exports.SupabaseService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const supabase_js_1 = require("@supabase/supabase-js");
+const uuid_1 = require("uuid");
 let SupabaseService = class SupabaseService {
     configService;
     authClient;
@@ -39,6 +40,19 @@ let SupabaseService = class SupabaseService {
     }
     getAuthClient() {
         return this.authClient;
+    }
+    async writeLog(maTk, hanhDong) {
+        try {
+            const maNk = `NK-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+            await this.adminClient.from('nhat_ky_he_thong').insert({
+                ma_nk: maNk,
+                ma_tk: maTk,
+                hanh_dong: hanhDong,
+            });
+        }
+        catch (err) {
+            console.error('Lỗi ghi log hệ thống:', err);
+        }
     }
 };
 exports.SupabaseService = SupabaseService;

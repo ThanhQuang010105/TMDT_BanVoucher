@@ -2,6 +2,7 @@ import { SupabaseService } from '../../supabase/supabase.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
 export declare class OrdersService {
     private readonly supabaseService;
     constructor(supabaseService: SupabaseService);
@@ -105,5 +106,15 @@ export declare class OrdersService {
                 }[];
             }[];
         }[];
+    }>;
+    cancelOrder(accessToken: string, maDh: string): Promise<{
+        success: boolean;
+        message: string;
+        ma_ls: string;
+    }>;
+    createComplaint(accessToken: string, dto: CreateComplaintDto): Promise<{
+        success: boolean;
+        data: any;
+        message: string;
     }>;
 }

@@ -55,9 +55,54 @@ let AuthService = class AuthService {
         });
         if (khError)
             throw new common_1.InternalServerErrorException(`Lỗi tạo khach_hang: ${khError.message}`);
+        await this.supabaseService.writeLog(userId, 'Đăng ký tài khoản khách hàng mới');
         return {
             message: 'Đăng ký thành công! Tài khoản đã được kích hoạt, bạn có thể đăng nhập ngay.',
             ma_kh: maKh,
+        };
+    }
+    async registerPartner(dto) {
+        const adminClient = this.supabaseService.getClient();
+        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+            email: dto.email,
+            password: dto.password,
+            email_confirm: true,
+        });
+        if (authError) {
+            if (authError.message.toLowerCase().includes('already registered') ||
+                authError.message.toLowerCase().includes('already been registered') ||
+                authError.code === 'email_exists') {
+                throw new common_1.ConflictException('Email này đã được sử dụng. Vui lòng đăng nhập.');
+            }
+            throw new common_1.BadRequestException(authError.message);
+        }
+        const userId = authData.user?.id;
+        if (!userId)
+            throw new common_1.InternalServerErrorException('Không thể tạo tài khoản Auth.');
+        const { error: tkError } = await adminClient.from('tai_khoan').insert({
+            ma_tk: userId,
+            username: dto.email,
+            vai_tro: 'doi_tac',
+            trang_thai_hoat_dong: 'pending',
+        });
+        if (tkError)
+            throw new common_1.InternalServerErrorException(`Lỗi tạo tai_khoan: ${tkError.message}`);
+        const maDt = `DT-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        const { error: dtError } = await adminClient.from('doi_tac').insert({
+            ma_dt: maDt,
+            ma_tk: userId,
+            ten_doanh_nghiep: dto.ten_doanh_nghiep,
+            nguoi_dai_dien: dto.nguoi_dai_dien ?? null,
+            ma_so_thue: dto.ma_so_thue ?? null,
+            trang_thai_duyet: 'pending',
+        });
+        if (dtError)
+            throw new common_1.InternalServerErrorException(`Lỗi tạo doi_tac: ${dtError.message}`);
+        await this.supabaseService.writeLog(userId, `Đăng ký hồ sơ đối tác mới: ${dto.ten_doanh_nghiep}`);
+        return {
+            success: true,
+            message: 'Đăng ký tài khoản đối tác thành công! Vui lòng chờ Admin phê duyệt hồ sơ.',
+            ma_dt: maDt,
         };
     }
     async login(dto) {
@@ -76,8 +121,9 @@ let AuthService = class AuthService {
             .eq('ma_tk', data.user.id)
             .single();
         if (taiKhoan?.trang_thai_hoat_dong !== 'active') {
-            throw new common_1.UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.');
+            throw new common_1.UnauthorizedException('Tài khoản của bạn đã bị khóa hoặc đang chờ phê duyệt. Vui lòng liên hệ hỗ trợ.');
         }
+        await this.supabaseService.writeLog(data.user.id, 'Đăng nhập vào hệ thống');
         return {
             message: 'Đăng nhập thành công.',
             access_token: data.session.access_token,
@@ -91,10 +137,14 @@ let AuthService = class AuthService {
     }
     async logout(accessToken) {
         const authClient = this.supabaseService.getAuthClient();
+        const { data: { user } } = await authClient.auth.getUser(accessToken);
         await authClient.auth.setSession({ access_token: accessToken, refresh_token: '' });
         const { error } = await authClient.auth.signOut();
         if (error)
             throw new common_1.InternalServerErrorException(error.message);
+        if (user) {
+            await this.supabaseService.writeLog(user.id, 'Đăng xuất khỏi hệ thống');
+        }
         return { message: 'Đăng xuất thành công.' };
     }
     async forgotPassword(dto) {

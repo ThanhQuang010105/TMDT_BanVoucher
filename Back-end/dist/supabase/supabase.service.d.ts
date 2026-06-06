@@ -9,4 +9,5 @@ export declare class SupabaseService implements OnModuleInit {
     onModuleInit(): void;
     getClient(): SupabaseClient;
     getAuthClient(): SupabaseClient;
+    writeLog(maTk: string, hanhDong: string): Promise<void>;
 }

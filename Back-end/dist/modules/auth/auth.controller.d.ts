@@ -1,5 +1,6 @@
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterPartnerDto } from './dto/register-partner.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -9,6 +10,11 @@ export declare class AuthController {
     register(dto: RegisterDto): Promise<{
         message: string;
         ma_kh: string;
+    }>;
+    registerPartner(dto: RegisterPartnerDto): Promise<{
+        success: boolean;
+        message: string;
+        ma_dt: string;
     }>;
     login(dto: LoginDto): Promise<{
         message: string;

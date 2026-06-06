@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
 const register_dto_1 = require("./dto/register.dto");
+const register_partner_dto_1 = require("./dto/register-partner.dto");
 const login_dto_1 = require("./dto/login.dto");
 const forgot_password_dto_1 = require("./dto/forgot-password.dto");
 const reset_password_dto_1 = require("./dto/reset-password.dto");
@@ -28,6 +29,9 @@ let AuthController = class AuthController {
     }
     register(dto) {
         return this.authService.register(dto);
+    }
+    registerPartner(dto) {
+        return this.authService.registerPartner(dto);
     }
     login(dto) {
         return this.authService.login(dto);
@@ -50,6 +54,13 @@ __decorate([
     __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "register", null);
+__decorate([
+    (0, common_1.Post)('register-partner'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [register_partner_dto_1.RegisterPartnerDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "registerPartner", null);
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

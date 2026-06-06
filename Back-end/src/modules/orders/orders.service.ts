@@ -11,6 +11,7 @@ import { SupabaseService } from '../../supabase/supabase.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -370,4 +371,174 @@ export class OrdersService {
     if (error) throw new InternalServerErrorException(error.message);
     return { data: data ?? [] };
   }
+
+  // ─── HỦY ĐƠN HÀNG & HOÀN TIỀN (BR-ADM-04, RB-13) ─────────────────────────────
+  async cancelOrder(accessToken: string, maDh: string) {
+    const client = this.supabaseService.getClient();
+
+    // 1. Xác thực người dùng và phân quyền
+    const { data: { user }, error: authError } = await client.auth.getUser(accessToken);
+    if (authError || !user) throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn.');
+
+    const { data: taiKhoan } = await client
+      .from('tai_khoan')
+      .select('vai_tro')
+      .eq('ma_tk', user.id)
+      .single();
+
+    const isAdmin = taiKhoan?.vai_tro === 'admin';
+
+    // Lấy thông tin đơn hàng
+    const { data: order, error: orderError } = await client
+      .from('don_hang')
+      .select('*')
+      .eq('ma_dh', maDh)
+      .single();
+
+    if (orderError || !order) throw new NotFoundException('Đơn hàng không tồn tại.');
+
+    // Nếu không phải admin, kiểm tra xem đơn hàng có phải của khách hàng này không
+    if (!isAdmin) {
+      const { data: kh } = await client
+        .from('khach_hang')
+        .select('ma_kh')
+        .eq('ma_tk', user.id)
+        .single();
+
+      if (!kh || order.ma_kh !== kh.ma_kh) {
+        throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này.');
+      }
+    }
+
+    if (order.trang_thai_thanh_toan === 'da_huy') {
+      throw new BadRequestException('Đơn hàng đã được hủy trước đó.');
+    }
+
+    // 2. Kiểm tra xem có voucher code nào của đơn này đã sử dụng chưa
+    const { data: voucherCodes, error: vcError } = await client
+      .from('voucher_phat_hanh')
+      .select('*')
+      .eq('ma_dh', maDh);
+
+    if (vcError) throw new InternalServerErrorException(vcError.message);
+
+    const hasUsedCode = (voucherCodes ?? []).some((vc: any) => vc.trang_thai === 'da_su_dung');
+    if (hasUsedCode) {
+      throw new BadRequestException('Không thể hủy đơn hàng do đã có mã voucher được sử dụng.');
+    }
+
+    // 3. Cập nhật trạng thái đơn hàng thành 'da_huy'
+    const { error: updateOrderError } = await client
+      .from('don_hang')
+      .update({ trang_thai_thanh_toan: 'da_huy' })
+      .eq('ma_dh', maDh);
+
+    if (updateOrderError) throw new InternalServerErrorException(updateOrderError.message);
+
+    // 4. Thu hồi mã voucher phát hành (chuyển sang 'da_huy')
+    const { error: updateVcError } = await client
+      .from('voucher_phat_hanh')
+      .update({ trang_thai: 'da_huy' })
+      .eq('ma_dh', maDh);
+
+    if (updateVcError) throw new InternalServerErrorException(updateVcError.message);
+
+    // 5. Hoàn lại số lượng tồn kho voucher (giảm so_luong_da_ban)
+    const { data: orderDetails } = await client
+      .from('chi_tiet_don_hang')
+      .select('ma_voucher, so_luong_mua')
+      .eq('ma_dh', maDh);
+
+    for (const detail of orderDetails ?? []) {
+      const { data: v } = await client
+        .from('voucher')
+        .select('so_luong_da_ban')
+        .eq('ma_voucher', detail.ma_voucher)
+        .single();
+
+      if (v) {
+        await client
+          .from('voucher')
+          .update({
+            so_luong_da_ban: Math.max(0, v.so_luong_da_ban - detail.so_luong_mua),
+          })
+          .eq('ma_voucher', detail.ma_voucher);
+      }
+    }
+
+    // 6. Ghi nhận giao dịch hoàn tiền âm vào lich_su_giao_dich
+    const maLs = `LS-REFUND-${uuidv4().slice(0, 8).toUpperCase()}`;
+    const { error: refundError } = await client.from('lich_su_giao_dich').insert({
+      ma_ls: maLs,
+      ma_dh: maDh,
+      so_tien: -Number(order.tong_tien),
+      phuong_thuc_thanh_toan: order.phuong_thuc_thanh_toan,
+      trang_thai_thanh_toan: 'hoan_tien',
+    });
+
+    if (refundError) throw new InternalServerErrorException(refundError.message);
+
+    // Ghi nhật ký hệ thống
+    await this.supabaseService.writeLog(user.id, `Hủy đơn hàng và hoàn tiền: ${maDh}`);
+
+    return {
+      success: true,
+      message: 'Hủy đơn hàng và hoàn tiền thành công.',
+      ma_ls: maLs,
+    };
+  }
+
+  // ─── GỬI KHIẾU NẠI (BR-CUS-08) ──────────────────────────────────────────────
+  async createComplaint(accessToken: string, dto: CreateComplaintDto) {
+    const client = this.supabaseService.getClient();
+    const maKh = await this.getKhachHang(accessToken);
+
+    // Kiểm tra xem khách hàng có thực sự mua voucher này chưa
+    const { data: orders } = await client
+      .from('don_hang')
+      .select('ma_dh')
+      .eq('ma_kh', maKh)
+      .eq('trang_thai_thanh_toan', 'thanh_cong');
+
+    const maDhList = (orders ?? []).map((o: any) => o.ma_dh);
+
+    if (maDhList.length === 0) {
+      throw new ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
+    }
+
+    const { data: purchaseRecord } = await client
+      .from('voucher_phat_hanh')
+      .select('ma_voucher_code')
+      .eq('ma_voucher', dto.ma_voucher)
+      .in('ma_dh', maDhList)
+      .limit(1)
+      .single();
+
+    if (!purchaseRecord) {
+      throw new ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
+    }
+
+    const maKN = `KN-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+    const { data, error } = await client
+      .from('khieu_nai')
+      .insert({
+        ma_kn: maKN,
+        ma_kh: maKh,
+        ma_voucher: dto.ma_voucher,
+        ly_do: dto.ly_do,
+        trang_thai_xl: 'pending',
+      })
+      .select()
+      .single();
+
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return {
+      success: true,
+      data,
+      message: 'Gửi khiếu nại thành công.',
+    };
+  }
 }
+

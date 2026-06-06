@@ -12,6 +12,7 @@ import { OrdersService } from './orders.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { CurrentToken } from '../../common/decorators/current-token.decorator';
 
 @ApiTags('Orders')
@@ -55,6 +56,15 @@ export class OrdersController {
     return this.ordersService.createOrder(token, dto);
   }
 
+  // POST /api/orders/:maDh/cancel   → Hủy đơn hàng và hoàn tiền
+  @Post(':maDh/cancel')
+  cancelOrder(
+    @CurrentToken() token: string,
+    @Param('maDh') maDh: string,
+  ) {
+    return this.ordersService.cancelOrder(token, maDh);
+  }
+
   // ── LỊCH SỬ ĐƠN HÀNG ─────────────────────────────────────────────────────
   // GET /api/orders/history        → Lịch sử đơn hàng
   @Get('history')
@@ -90,4 +100,15 @@ export class OrdersController {
   ) {
     return this.ordersService.createReview(token, dto);
   }
+
+  // ── KHIẾU NẠI ────────────────────────────────────────────────────────────
+  // POST /api/orders/complaints    → Gửi khiếu nại voucher
+  @Post('complaints')
+  createComplaint(
+    @CurrentToken() token: string,
+    @Body() dto: CreateComplaintDto,
+  ) {
+    return this.ordersService.createComplaint(token, dto);
+  }
 }
+

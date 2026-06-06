@@ -12,6 +12,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VouchersService = void 0;
 const common_1 = require("@nestjs/common");
 const supabase_service_1 = require("../../supabase/supabase.service");
+const voucher_status_enum_1 = require("./enums/voucher-status.enum");
+const uuid_1 = require("uuid");
 let VouchersService = class VouchersService {
     supabaseService;
     constructor(supabaseService) {
@@ -54,11 +56,30 @@ let VouchersService = class VouchersService {
             .select(`ma_voucher, ten_voucher, mo_ta, gia_goc, gia_ban,
          so_luong_phat_hanh, so_luong_da_ban, ngay_bd, ngay_kt, link_voucher_banner,
          doi_tac ( ma_dt, ten_doanh_nghiep ),
-         danh_muc ( ma_taxon, ten_taxon )`, { count: 'exact' })
-            .eq('trang_thai', 'active')
-            .gte('ngay_kt', now)
-            .lte('ngay_bd', now)
-            .gt('so_luong_phat_hanh', 0);
+         danh_muc ( ma_taxon, ten_taxon )`, { count: 'exact' });
+        if (dto.hieu_luc) {
+            if (dto.hieu_luc === 'dang_dien_ra') {
+                query = query
+                    .eq('trang_thai', 'active')
+                    .gte('ngay_kt', now)
+                    .lte('ngay_bd', now);
+            }
+            else if (dto.hieu_luc === 'sap_dien_ra') {
+                query = query
+                    .in('trang_thai', ['active', 'scheduled'])
+                    .gt('ngay_bd', now);
+            }
+            else if (dto.hieu_luc === 'het_han') {
+                query = query.lt('ngay_kt', now);
+            }
+        }
+        else {
+            query = query
+                .eq('trang_thai', 'active')
+                .gte('ngay_kt', now)
+                .lte('ngay_bd', now);
+        }
+        query = query.gt('so_luong_phat_hanh', 0);
         if (dto.keyword) {
             query = query.ilike('ten_voucher', `%${dto.keyword}%`);
         }
@@ -140,6 +161,406 @@ let VouchersService = class VouchersService {
         if (error)
             throw new common_1.NotFoundException(error.message);
         return { data: data ?? [] };
+    }
+    async createVoucher(dto, userId) {
+        if (dto.GiaBan > dto.GiaGoc) {
+            throw new common_1.BadRequestException('Giá bán phải nhỏ hơn hoặc bằng giá gốc');
+        }
+        if (new Date(dto.NgayBD) >= new Date(dto.NgayKT)) {
+            throw new common_1.BadRequestException('Ngày bắt đầu phải trước ngày kết thúc');
+        }
+        if (new Date(dto.NgayKT) <= new Date()) {
+            throw new common_1.BadRequestException('Ngày kết thúc phải lớn hơn thời điểm hiện tại');
+        }
+        const maVoucher = `VC-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        const voucherData = {
+            ma_voucher: maVoucher,
+            ma_dt: dto.MaDT,
+            ma_pl: dto.MaPL,
+            ma_taxon: dto.MaTaxon,
+            ten_voucher: dto.TenVoucher,
+            mo_ta: dto.MoTa,
+            gia_goc: dto.GiaGoc,
+            gia_ban: dto.GiaBan,
+            so_luong_phat_hanh: dto.SoLuongPhatHanh,
+            so_luong_da_ban: 0,
+            ngay_bd: dto.NgayBD,
+            ngay_kt: dto.NgayKT,
+            link_voucher_banner: dto.bannerUrl,
+            trang_thai: voucher_status_enum_1.VoucherStatus.DRAFT,
+        };
+        const { data, error } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .insert(voucherData)
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        if (userId) {
+            await this.supabaseService.writeLog(userId, `Tạo mới voucher nháp: ${dto.TenVoucher} (${maVoucher})`);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Tạo voucher nháp thành công',
+        };
+    }
+    async getAllVouchers() {
+        const { data, error } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .select('*');
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        return {
+            success: true,
+            data,
+        };
+    }
+    extractPathFromUrl(url) {
+        try {
+            const parts = url.split('/storage/v1/object/public/images/');
+            return parts[1] || null;
+        }
+        catch {
+            return null;
+        }
+    }
+    async updateVoucher(id, payload, userId) {
+        const client = this.supabaseService.getClient();
+        const { data: voucher, error: findError } = await client
+            .from('voucher')
+            .select('*')
+            .eq('ma_voucher', id)
+            .single();
+        if (findError || !voucher) {
+            throw new common_1.NotFoundException('Voucher không tồn tại');
+        }
+        if (payload.link_voucher_banner && payload.link_voucher_banner !== voucher.link_voucher_banner) {
+            const oldPath = this.extractPathFromUrl(voucher.link_voucher_banner);
+            if (oldPath) {
+                await client.storage.from('images').remove([oldPath]);
+            }
+        }
+        if (voucher.trang_thai === voucher_status_enum_1.VoucherStatus.REJECTED ||
+            voucher.trang_thai === voucher_status_enum_1.VoucherStatus.SCHEDULED) {
+            payload.trang_thai = voucher_status_enum_1.VoucherStatus.PENDING;
+        }
+        if (voucher.trang_thai === voucher_status_enum_1.VoucherStatus.DRAFT) {
+            payload.trang_thai = voucher_status_enum_1.VoucherStatus.DRAFT;
+        }
+        const { data, error } = await client
+            .from('voucher')
+            .update(payload)
+            .eq('ma_voucher', id)
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        if (userId) {
+            await this.supabaseService.writeLog(userId, `Cập nhật thông tin voucher: ${id}`);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Cập nhật thông tin voucher thành công',
+        };
+    }
+    async removeVoucher(id, userId) {
+        const client = this.supabaseService.getClient();
+        const { data: voucher } = await client
+            .from('voucher')
+            .select('*')
+            .eq('ma_voucher', id)
+            .single();
+        if (voucher?.link_voucher_banner) {
+            const oldPath = this.extractPathFromUrl(voucher.link_voucher_banner);
+            if (oldPath) {
+                await client.storage.from('images').remove([oldPath]);
+            }
+        }
+        const { error } = await client
+            .from('voucher')
+            .delete()
+            .eq('ma_voucher', id);
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        if (userId) {
+            await this.supabaseService.writeLog(userId, `Xóa voucher: ${id}`);
+        }
+        return {
+            success: true,
+            message: 'Xóa voucher thành công',
+        };
+    }
+    async submitVoucher(id, userId) {
+        const { data: voucher, error: findError } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .select('*')
+            .eq('ma_voucher', id)
+            .single();
+        if (findError || !voucher) {
+            throw new common_1.NotFoundException('Voucher không tồn tại');
+        }
+        if (voucher.trang_thai !== voucher_status_enum_1.VoucherStatus.DRAFT) {
+            throw new common_1.BadRequestException('Voucher không còn ở trạng thái nháp để gửi duyệt');
+        }
+        const { data, error } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .update({
+            trang_thai: voucher_status_enum_1.VoucherStatus.PENDING,
+        })
+            .eq('ma_voucher', id)
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        if (userId) {
+            await this.supabaseService.writeLog(userId, `Gửi duyệt voucher: ${id}`);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Gửi duyệt voucher thành công',
+        };
+    }
+    async searchVoucherForAdmin(query) {
+        let request = this.supabaseService.getClient().from('voucher').select('*');
+        if (query.TenVoucher) {
+            request = request.ilike('ten_voucher', `%${query.TenVoucher}%`);
+        }
+        if (query.TrangThai) {
+            request = request.eq('trang_thai', query.TrangThai.toLowerCase());
+        }
+        if (query.GiaMin) {
+            request = request.gte('gia_ban', query.GiaMin);
+        }
+        if (query.GiaMax) {
+            request = request.lte('gia_ban', query.GiaMax);
+        }
+        const { data, error } = await request;
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        let results = data ?? [];
+        if (query.TiLeGiamMin) {
+            results = results.filter((v) => ((v.gia_goc - v.gia_ban) / v.gia_goc) * 100 >= query.TiLeGiamMin);
+        }
+        return {
+            success: true,
+            total: results.length,
+            data: results,
+        };
+    }
+    async approveVoucher(id, userId) {
+        const { data: voucher, error: findError } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .select('*')
+            .eq('ma_voucher', id)
+            .single();
+        if (findError || !voucher) {
+            throw new common_1.NotFoundException('Voucher không tồn tại');
+        }
+        if (voucher.trang_thai !== voucher_status_enum_1.VoucherStatus.PENDING) {
+            throw new common_1.BadRequestException('Voucher không ở trạng thái chờ duyệt');
+        }
+        if (Number(voucher.gia_ban) > Number(voucher.gia_goc)) {
+            throw new common_1.BadRequestException('Giá bán không được lớn hơn giá gốc');
+        }
+        const ngayBd = new Date(voucher.ngay_bd);
+        const ngayKt = new Date(voucher.ngay_kt);
+        if (ngayBd >= ngayKt) {
+            throw new common_1.BadRequestException('Ngày bắt đầu phải trước ngày kết thúc');
+        }
+        if (ngayKt <= new Date()) {
+            throw new common_1.BadRequestException('Ngày kết thúc phải lớn hơn thời điểm hiện tại');
+        }
+        const now = new Date();
+        const status = new Date(voucher.ngay_bd) > now
+            ? voucher_status_enum_1.VoucherStatus.SCHEDULED
+            : voucher_status_enum_1.VoucherStatus.ACTIVE;
+        const { data, error } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .update({
+            trang_thai: status,
+        })
+            .eq('ma_voucher', id)
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        if (userId) {
+            await this.supabaseService.writeLog(userId, `Phê duyệt voucher: ${id}`);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Duyệt voucher thành công',
+        };
+    }
+    async rejectVoucher(id, userId) {
+        const { data: voucher, error: findError } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .select('*')
+            .eq('ma_voucher', id)
+            .single();
+        if (findError || !voucher) {
+            throw new common_1.NotFoundException('Voucher không tồn tại');
+        }
+        if (voucher.trang_thai !== voucher_status_enum_1.VoucherStatus.PENDING) {
+            throw new common_1.BadRequestException('Voucher không ở trạng thái chờ duyệt');
+        }
+        const { data, error } = await this.supabaseService
+            .getClient()
+            .from('voucher')
+            .update({
+            trang_thai: voucher_status_enum_1.VoucherStatus.REJECTED,
+        })
+            .eq('ma_voucher', id)
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        if (userId) {
+            await this.supabaseService.writeLog(userId, `Từ chối duyệt voucher: ${id}`);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Từ chối duyệt voucher thành công',
+        };
+    }
+    async getBranches(maDT) {
+        const { data, error } = await this.supabaseService
+            .getClient()
+            .from('chi_nhanh')
+            .select('*')
+            .eq('ma_dt', maDT);
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        return {
+            success: true,
+            data,
+        };
+    }
+    async uploadBanner(file) {
+        const fileName = `banner-url/${Date.now()}-${file.originalname}`;
+        const { error } = await this.supabaseService
+            .getClient()
+            .storage.from('images')
+            .upload(fileName, file.buffer, {
+            contentType: file.mimetype,
+        });
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        const { data: { publicUrl }, } = this.supabaseService
+            .getClient()
+            .storage.from('images')
+            .getPublicUrl(fileName);
+        return {
+            success: true,
+            data: {
+                bannerUrl: publicUrl,
+            },
+            message: 'Upload banner thành công',
+        };
+    }
+    async createBranch(dto) {
+        const client = this.supabaseService.getClient();
+        const { data: doiTac, error: dtError } = await client
+            .from('doi_tac')
+            .select('ma_dt')
+            .eq('ma_dt', dto.ma_dt)
+            .single();
+        if (dtError || !doiTac) {
+            throw new common_1.NotFoundException('Đối tác không tồn tại');
+        }
+        const maCN = `CN-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        const { data, error } = await client
+            .from('chi_nhanh')
+            .insert({
+            ma_cn: maCN,
+            ma_dt: dto.ma_dt,
+            ten_chi_nhanh: dto.ten_chi_nhanh,
+            dia_chi: dto.dia_chi ?? null,
+            trang_thai_hoat_dong: dto.trang_thai_hoat_dong ?? 'active',
+        })
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Thêm chi nhánh thành công',
+        };
+    }
+    async updateBranch(maCN, dto) {
+        const client = this.supabaseService.getClient();
+        const { data: chiNhanh, error: cnError } = await client
+            .from('chi_nhanh')
+            .select('*')
+            .eq('ma_cn', maCN)
+            .single();
+        if (cnError || !chiNhanh) {
+            throw new common_1.NotFoundException('Chi nhánh không tồn tại');
+        }
+        const { data, error } = await client
+            .from('chi_nhanh')
+            .update({
+            ten_chi_nhanh: dto.ten_chi_nhanh ?? chiNhanh.ten_chi_nhanh,
+            dia_chi: dto.dia_chi ?? chiNhanh.dia_chi,
+            trang_thai_hoat_dong: dto.trang_thai_hoat_dong ?? chiNhanh.trang_thai_hoat_dong,
+        })
+            .eq('ma_cn', maCN)
+            .select()
+            .single();
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        return {
+            success: true,
+            data,
+            message: 'Cập nhật thông tin chi nhánh thành công',
+        };
+    }
+    async deleteBranch(maCN) {
+        const client = this.supabaseService.getClient();
+        const { data: chiNhanh, error: cnError } = await client
+            .from('chi_nhanh')
+            .select('ma_cn')
+            .eq('ma_cn', maCN)
+            .single();
+        if (cnError || !chiNhanh) {
+            throw new common_1.NotFoundException('Chi nhánh không tồn tại');
+        }
+        const { error } = await client
+            .from('chi_nhanh')
+            .delete()
+            .eq('ma_cn', maCN);
+        if (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+        return {
+            success: true,
+            message: 'Xóa chi nhánh thành công',
+        };
     }
 };
 exports.VouchersService = VouchersService;

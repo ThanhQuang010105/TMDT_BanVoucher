@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterPartnerDto } from './dto/register-partner.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -63,9 +64,68 @@ export class AuthService {
 
     if (khError) throw new InternalServerErrorException(`Lỗi tạo khach_hang: ${khError.message}`);
 
+    // Ghi log hệ thống
+    await this.supabaseService.writeLog(userId, 'Đăng ký tài khoản khách hàng mới');
+
     return {
       message: 'Đăng ký thành công! Tài khoản đã được kích hoạt, bạn có thể đăng nhập ngay.',
       ma_kh: maKh,
+    };
+  }
+
+  // ─── ĐĂNG KÝ TÀI KHOẢN ĐỐI TÁC (BR-PAR-01) ──────────────────────────────────
+  async registerPartner(dto: RegisterPartnerDto) {
+    const adminClient = this.supabaseService.getClient();
+
+    // Bước 1: Tạo user trên Supabase Auth bằng Admin API
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+      email: dto.email,
+      password: dto.password,
+      email_confirm: true,
+    });
+
+    if (authError) {
+      if (authError.message.toLowerCase().includes('already registered') ||
+          authError.message.toLowerCase().includes('already been registered') ||
+          (authError as any).code === 'email_exists') {
+        throw new ConflictException('Email này đã được sử dụng. Vui lòng đăng nhập.');
+      }
+      throw new BadRequestException(authError.message);
+    }
+
+    const userId = authData.user?.id;
+    if (!userId) throw new InternalServerErrorException('Không thể tạo tài khoản Auth.');
+
+    // Bước 2: Tạo bản ghi trong bảng tai_khoan với trạng thái hoạt động ban đầu là 'pending'
+    const { error: tkError } = await adminClient.from('tai_khoan').insert({
+      ma_tk: userId,
+      username: dto.email,
+      vai_tro: 'doi_tac',
+      trang_thai_hoat_dong: 'pending', // Cần admin duyệt
+    });
+
+    if (tkError) throw new InternalServerErrorException(`Lỗi tạo tai_khoan: ${tkError.message}`);
+
+    // Bước 3: Tạo hồ sơ trong bảng doi_tac
+    const maDt = `DT-${uuidv4().slice(0, 8).toUpperCase()}`;
+    const { error: dtError } = await adminClient.from('doi_tac').insert({
+      ma_dt: maDt,
+      ma_tk: userId,
+      ten_doanh_nghiep: dto.ten_doanh_nghiep,
+      nguoi_dai_dien: dto.nguoi_dai_dien ?? null,
+      ma_so_thue: dto.ma_so_thue ?? null,
+      trang_thai_duyet: 'pending',
+    });
+
+    if (dtError) throw new InternalServerErrorException(`Lỗi tạo doi_tac: ${dtError.message}`);
+
+    // Ghi log hệ thống
+    await this.supabaseService.writeLog(userId, `Đăng ký hồ sơ đối tác mới: ${dto.ten_doanh_nghiep}`);
+
+    return {
+      success: true,
+      message: 'Đăng ký tài khoản đối tác thành công! Vui lòng chờ Admin phê duyệt hồ sơ.',
+      ma_dt: maDt,
     };
   }
 
@@ -93,8 +153,11 @@ export class AuthService {
       .single();
 
     if (taiKhoan?.trang_thai_hoat_dong !== 'active') {
-      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.');
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa hoặc đang chờ phê duyệt. Vui lòng liên hệ hỗ trợ.');
     }
+
+    // Ghi log đăng nhập
+    await this.supabaseService.writeLog(data.user.id, 'Đăng nhập vào hệ thống');
 
     return {
       message: 'Đăng nhập thành công.',
@@ -111,11 +174,16 @@ export class AuthService {
   // ─── ĐĂNG XUẤT ──────────────────────────────────────────────────────────────
   async logout(accessToken: string) {
     const authClient = this.supabaseService.getAuthClient();
+    const { data: { user } } = await authClient.auth.getUser(accessToken);
 
     await authClient.auth.setSession({ access_token: accessToken, refresh_token: '' });
     const { error } = await authClient.auth.signOut();
 
     if (error) throw new InternalServerErrorException(error.message);
+
+    if (user) {
+      await this.supabaseService.writeLog(user.id, 'Đăng xuất khỏi hệ thống');
+    }
 
     return { message: 'Đăng xuất thành công.' };
   }

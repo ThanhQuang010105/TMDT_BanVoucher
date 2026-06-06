@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { SearchVoucherDto } from './dto/search-voucher.dto';
+import { CreateVoucherDto } from './dto/create-voucher.dto';
+import { CreateBranchDto } from './dto/create-branch.dto';
+import { UpdateBranchDto } from './dto/update-branch.dto';
+import { VoucherStatus } from './enums/voucher-status.enum';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class VouchersService {
@@ -17,7 +22,7 @@ export class VouchersService {
       .is('ma_taxon_cha', null)
       .order('thu_tu_hien_thi');
 
-    // Lấy voucher nổi bật (trang trạng thai 'active', còn hàng, sắp xếp mới nhất)
+    // Lấy voucher nổi bật (trạng thái 'active', còn hàng, sắp xếp mới nhất)
     const now = new Date().toISOString();
     const { data: featuredVouchers } = await client
       .from('voucher')
@@ -38,7 +43,7 @@ export class VouchersService {
     };
   }
 
-  // ─── TÌM KIẾM VÀ LỌC VOUCHER ────────────────────────────────────────────────
+  // ─── TÌM KIẾM VÀ LỌC VOUCHER (DÀNH CHO KHÁCH HÀNG) ──────────────────────────
   async searchVouchers(dto: SearchVoucherDto) {
     const client = this.supabaseService.getClient();
     const page = parseInt(dto.page ?? '1', 10);
@@ -55,11 +60,31 @@ export class VouchersService {
          doi_tac ( ma_dt, ten_doanh_nghiep ),
          danh_muc ( ma_taxon, ten_taxon )`,
         { count: 'exact' },
-      )
-      .eq('trang_thai', 'active')
-      .gte('ngay_kt', now)
-      .lte('ngay_bd', now)
-      .gt('so_luong_phat_hanh', 0); // Còn hàng
+      );
+
+    // Lọc theo trạng thái hiệu lực (sap_dien_ra, dang_dien_ra, het_han)
+    if (dto.hieu_luc) {
+      if (dto.hieu_luc === 'dang_dien_ra') {
+        query = query
+          .eq('trang_thai', 'active')
+          .gte('ngay_kt', now)
+          .lte('ngay_bd', now);
+      } else if (dto.hieu_luc === 'sap_dien_ra') {
+        query = query
+          .in('trang_thai', ['active', 'scheduled'])
+          .gt('ngay_bd', now);
+      } else if (dto.hieu_luc === 'het_han') {
+        query = query.lt('ngay_kt', now);
+      }
+    } else {
+      // Mặc định: Chỉ lấy voucher đang hoạt động trong hạn
+      query = query
+        .eq('trang_thai', 'active')
+        .gte('ngay_kt', now)
+        .lte('ngay_bd', now);
+    }
+
+    query = query.gt('so_luong_phat_hanh', 0); // Còn hàng
 
     // Lọc theo từ khóa (tên voucher)
     if (dto.keyword) {
@@ -171,5 +196,523 @@ export class VouchersService {
     if (error) throw new NotFoundException(error.message);
 
     return { data: data ?? [] };
+  }
+
+  // ─── TÍNH NĂNG MỚI TÍCH HỢP TỪ KIÊN (DÀNH CHO ĐỐI TÁC / QUẢN TRỊ) ─────────────
+
+  // Tạo voucher nháp (DRAFT)
+  async createVoucher(dto: CreateVoucherDto, userId?: string) {
+    if (dto.GiaBan > dto.GiaGoc) {
+      throw new BadRequestException('Giá bán phải nhỏ hơn hoặc bằng giá gốc');
+    }
+    if (new Date(dto.NgayBD) >= new Date(dto.NgayKT)) {
+      throw new BadRequestException('Ngày bắt đầu phải trước ngày kết thúc');
+    }
+    if (new Date(dto.NgayKT) <= new Date()) {
+      throw new BadRequestException('Ngày kết thúc phải lớn hơn thời điểm hiện tại');
+    }
+
+    const maVoucher = `VC-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+    const voucherData = {
+      ma_voucher: maVoucher,
+      ma_dt: dto.MaDT,
+      ma_pl: dto.MaPL,
+      ma_taxon: dto.MaTaxon,
+      ten_voucher: dto.TenVoucher,
+      mo_ta: dto.MoTa,
+      gia_goc: dto.GiaGoc,
+      gia_ban: dto.GiaBan,
+      so_luong_phat_hanh: dto.SoLuongPhatHanh,
+      so_luong_da_ban: 0,
+      ngay_bd: dto.NgayBD,
+      ngay_kt: dto.NgayKT,
+      link_voucher_banner: dto.bannerUrl, // Ánh xạ đúng tên trường link_voucher_banner
+      trang_thai: VoucherStatus.DRAFT,
+    };
+
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .insert(voucherData)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (userId) {
+      await this.supabaseService.writeLog(userId, `Tạo mới voucher nháp: ${dto.TenVoucher} (${maVoucher})`);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Tạo voucher nháp thành công',
+    };
+  }
+
+  // Lấy toàn bộ voucher (kể cả nháp, chờ duyệt...)
+  async getAllVouchers() {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .select('*');
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // Bóc tách đường dẫn từ URL để xóa file trên Storage
+  private extractPathFromUrl(url: string): string | null {
+    try {
+      const parts = url.split('/storage/v1/object/public/images/');
+      return parts[1] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Cập nhật voucher và xóa banner cũ trên Storage nếu đổi banner
+  async updateVoucher(id: string, payload: any, userId?: string) {
+    const client = this.supabaseService.getClient();
+
+    const { data: voucher, error: findError } = await client
+      .from('voucher')
+      .select('*')
+      .eq('ma_voucher', id)
+      .single();
+
+    if (findError || !voucher) {
+      throw new NotFoundException('Voucher không tồn tại');
+    }
+
+    // Nếu thay đổi đường dẫn banner, tiến hành xóa ảnh banner cũ trên Supabase Storage
+    if (payload.link_voucher_banner && payload.link_voucher_banner !== voucher.link_voucher_banner) {
+      const oldPath = this.extractPathFromUrl(voucher.link_voucher_banner);
+      if (oldPath) {
+        await client.storage.from('images').remove([oldPath]);
+      }
+    }
+
+    // Kiểm tra trạng thái để cập nhật về PENDING nếu bị từ chối/lên lịch trước đó
+    if (
+      voucher.trang_thai === VoucherStatus.REJECTED ||
+      voucher.trang_thai === VoucherStatus.SCHEDULED
+    ) {
+      payload.trang_thai = VoucherStatus.PENDING;
+    }
+
+    if (voucher.trang_thai === VoucherStatus.DRAFT) {
+      payload.trang_thai = VoucherStatus.DRAFT;
+    }
+
+    const { data, error } = await client
+      .from('voucher')
+      .update(payload)
+      .eq('ma_voucher', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (userId) {
+      await this.supabaseService.writeLog(userId, `Cập nhật thông tin voucher: ${id}`);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Cập nhật thông tin voucher thành công',
+    };
+  }
+
+  // Xóa voucher và dọn dẹp file banner trên Storage
+  async removeVoucher(id: string, userId?: string) {
+    const client = this.supabaseService.getClient();
+
+    const { data: voucher } = await client
+      .from('voucher')
+      .select('*')
+      .eq('ma_voucher', id)
+      .single();
+
+    if (voucher?.link_voucher_banner) {
+      const oldPath = this.extractPathFromUrl(voucher.link_voucher_banner);
+      if (oldPath) {
+        await client.storage.from('images').remove([oldPath]);
+      }
+    }
+
+    const { error } = await client
+      .from('voucher')
+      .delete()
+      .eq('ma_voucher', id);
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (userId) {
+      await this.supabaseService.writeLog(userId, `Xóa voucher: ${id}`);
+    }
+
+    return {
+      success: true,
+      message: 'Xóa voucher thành công',
+    };
+  }
+
+  // Gửi duyệt voucher
+  async submitVoucher(id: string, userId?: string) {
+    const { data: voucher, error: findError } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .select('*')
+      .eq('ma_voucher', id)
+      .single();
+
+    if (findError || !voucher) {
+      throw new NotFoundException('Voucher không tồn tại');
+    }
+
+    if (voucher.trang_thai !== VoucherStatus.DRAFT) {
+      throw new BadRequestException('Voucher không còn ở trạng thái nháp để gửi duyệt');
+    }
+
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .update({
+        trang_thai: VoucherStatus.PENDING,
+      })
+      .eq('ma_voucher', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (userId) {
+      await this.supabaseService.writeLog(userId, `Gửi duyệt voucher: ${id}`);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Gửi duyệt voucher thành công',
+    };
+  }
+
+  // Tìm kiếm voucher nâng cao cho Admin / Đối tác
+  async searchVoucherForAdmin(query: any) {
+    let request = this.supabaseService.getClient().from('voucher').select('*');
+
+    if (query.TenVoucher) {
+      request = request.ilike('ten_voucher', `%${query.TenVoucher}%`);
+    }
+
+    if (query.TrangThai) {
+      request = request.eq('trang_thai', query.TrangThai.toLowerCase());
+    }
+
+    if (query.GiaMin) {
+      request = request.gte('gia_ban', query.GiaMin);
+    }
+
+    if (query.GiaMax) {
+      request = request.lte('gia_ban', query.GiaMax);
+    }
+
+    const { data, error } = await request;
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    let results = data ?? [];
+
+    if (query.TiLeGiamMin) {
+      results = results.filter(
+          (v) => ((v.gia_goc - v.gia_ban) / v.gia_goc) * 100 >= query.TiLeGiamMin,
+      );
+    }
+
+    return {
+      success: true,
+      total: results.length,
+      data: results,
+    };
+  }
+
+  // Duyệt voucher và tự động lên lịch/hoạt động
+  async approveVoucher(id: string, userId?: string) {
+    const { data: voucher, error: findError } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .select('*')
+      .eq('ma_voucher', id)
+      .single();
+
+    if (findError || !voucher) {
+      throw new NotFoundException('Voucher không tồn tại');
+    }
+
+    if (voucher.trang_thai !== VoucherStatus.PENDING) {
+      throw new BadRequestException('Voucher không ở trạng thái chờ duyệt');
+    }
+
+    // Validate theo BRD (RB-02, RB-03) khi duyệt voucher
+    if (Number(voucher.gia_ban) > Number(voucher.gia_goc)) {
+      throw new BadRequestException('Giá bán không được lớn hơn giá gốc');
+    }
+    const ngayBd = new Date(voucher.ngay_bd);
+    const ngayKt = new Date(voucher.ngay_kt);
+    if (ngayBd >= ngayKt) {
+      throw new BadRequestException('Ngày bắt đầu phải trước ngày kết thúc');
+    }
+    if (ngayKt <= new Date()) {
+      throw new BadRequestException('Ngày kết thúc phải lớn hơn thời điểm hiện tại');
+    }
+
+    const now = new Date();
+    const status =
+      new Date(voucher.ngay_bd) > now
+        ? VoucherStatus.SCHEDULED
+        : VoucherStatus.ACTIVE;
+
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .update({
+        trang_thai: status,
+      })
+      .eq('ma_voucher', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (userId) {
+      await this.supabaseService.writeLog(userId, `Phê duyệt voucher: ${id}`);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Duyệt voucher thành công',
+    };
+  }
+
+  // Từ chối duyệt voucher
+  async rejectVoucher(id: string, userId?: string) {
+    const { data: voucher, error: findError } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .select('*')
+      .eq('ma_voucher', id)
+      .single();
+
+    if (findError || !voucher) {
+      throw new NotFoundException('Voucher không tồn tại');
+    }
+
+    if (voucher.trang_thai !== VoucherStatus.PENDING) {
+      throw new BadRequestException('Voucher không ở trạng thái chờ duyệt');
+    }
+
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('voucher')
+      .update({
+        trang_thai: VoucherStatus.REJECTED,
+      })
+      .eq('ma_voucher', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (userId) {
+      await this.supabaseService.writeLog(userId, `Từ chối duyệt voucher: ${id}`);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Từ chối duyệt voucher thành công',
+    };
+  }
+
+  // Lấy chi nhánh của đối tác
+  async getBranches(maDT: string) {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from('chi_nhanh')
+      .select('*')
+      .eq('ma_dt', maDT);
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // Tải banner lên Supabase Storage
+  async uploadBanner(file: any) {
+    const fileName = `banner-url/${Date.now()}-${file.originalname}`;
+
+    const { error } = await this.supabaseService
+      .getClient()
+      .storage.from('images')
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+      });
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    const {
+      data: { publicUrl },
+    } = this.supabaseService
+      .getClient()
+      .storage.from('images')
+      .getPublicUrl(fileName);
+
+    return {
+      success: true,
+      data: {
+        bannerUrl: publicUrl,
+      },
+      message: 'Upload banner thành công',
+    };
+  }
+
+  // ─── CRUD CHI NHÁNH (BR-PAR-01) ──────────────────────────────────────────────
+
+  // Thêm chi nhánh mới
+  async createBranch(dto: CreateBranchDto) {
+    const client = this.supabaseService.getClient();
+
+    // Kiểm tra xem đối tác có tồn tại không
+    const { data: doiTac, error: dtError } = await client
+      .from('doi_tac')
+      .select('ma_dt')
+      .eq('ma_dt', dto.ma_dt)
+      .single();
+
+    if (dtError || !doiTac) {
+      throw new NotFoundException('Đối tác không tồn tại');
+    }
+
+    const maCN = `CN-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+    const { data, error } = await client
+      .from('chi_nhanh')
+      .insert({
+        ma_cn: maCN,
+        ma_dt: dto.ma_dt,
+        ten_chi_nhanh: dto.ten_chi_nhanh,
+        dia_chi: dto.dia_chi ?? null,
+        trang_thai_hoat_dong: dto.trang_thai_hoat_dong ?? 'active',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Thêm chi nhánh thành công',
+    };
+  }
+
+  // Cập nhật thông tin chi nhánh
+  async updateBranch(maCN: string, dto: UpdateBranchDto) {
+    const client = this.supabaseService.getClient();
+
+    // Kiểm tra chi nhánh tồn tại
+    const { data: chiNhanh, error: cnError } = await client
+      .from('chi_nhanh')
+      .select('*')
+      .eq('ma_cn', maCN)
+      .single();
+
+    if (cnError || !chiNhanh) {
+      throw new NotFoundException('Chi nhánh không tồn tại');
+    }
+
+    const { data, error } = await client
+      .from('chi_nhanh')
+      .update({
+        ten_chi_nhanh: dto.ten_chi_nhanh ?? chiNhanh.ten_chi_nhanh,
+        dia_chi: dto.dia_chi ?? chiNhanh.dia_chi,
+        trang_thai_hoat_dong: dto.trang_thai_hoat_dong ?? chiNhanh.trang_thai_hoat_dong,
+      })
+      .eq('ma_cn', maCN)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Cập nhật thông tin chi nhánh thành công',
+    };
+  }
+
+  // Xóa chi nhánh
+  async deleteBranch(maCN: string) {
+    const client = this.supabaseService.getClient();
+
+    // Kiểm tra chi nhánh tồn tại
+    const { data: chiNhanh, error: cnError } = await client
+      .from('chi_nhanh')
+      .select('ma_cn')
+      .eq('ma_cn', maCN)
+      .single();
+
+    if (cnError || !chiNhanh) {
+      throw new NotFoundException('Chi nhánh không tồn tại');
+    }
+
+    const { error } = await client
+      .from('chi_nhanh')
+      .delete()
+      .eq('ma_cn', maCN);
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return {
+      success: true,
+      message: 'Xóa chi nhánh thành công',
+    };
   }
 }

@@ -19,6 +19,7 @@ const orders_service_1 = require("./orders.service");
 const add_to_cart_dto_1 = require("./dto/add-to-cart.dto");
 const create_order_dto_1 = require("./dto/create-order.dto");
 const create_review_dto_1 = require("./dto/create-review.dto");
+const create_complaint_dto_1 = require("./dto/create-complaint.dto");
 const current_token_decorator_1 = require("../../common/decorators/current-token.decorator");
 let OrdersController = class OrdersController {
     ordersService;
@@ -37,6 +38,9 @@ let OrdersController = class OrdersController {
     createOrder(token, dto) {
         return this.ordersService.createOrder(token, dto);
     }
+    cancelOrder(token, maDh) {
+        return this.ordersService.cancelOrder(token, maDh);
+    }
     getOrderHistory(token) {
         return this.ordersService.getOrderHistory(token);
     }
@@ -48,6 +52,9 @@ let OrdersController = class OrdersController {
     }
     createReview(token, dto) {
         return this.ordersService.createReview(token, dto);
+    }
+    createComplaint(token, dto) {
+        return this.ordersService.createComplaint(token, dto);
     }
 };
 exports.OrdersController = OrdersController;
@@ -83,6 +90,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "createOrder", null);
 __decorate([
+    (0, common_1.Post)(':maDh/cancel'),
+    __param(0, (0, current_token_decorator_1.CurrentToken)()),
+    __param(1, (0, common_1.Param)('maDh')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "cancelOrder", null);
+__decorate([
     (0, common_1.Get)('history'),
     __param(0, (0, current_token_decorator_1.CurrentToken)()),
     __metadata("design:type", Function),
@@ -113,6 +128,14 @@ __decorate([
     __metadata("design:paramtypes", [String, create_review_dto_1.CreateReviewDto]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "createReview", null);
+__decorate([
+    (0, common_1.Post)('complaints'),
+    __param(0, (0, current_token_decorator_1.CurrentToken)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, create_complaint_dto_1.CreateComplaintDto]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "createComplaint", null);
 exports.OrdersController = OrdersController = __decorate([
     (0, swagger_1.ApiTags)('Orders'),
     (0, swagger_1.ApiBearerAuth)('access-token'),
