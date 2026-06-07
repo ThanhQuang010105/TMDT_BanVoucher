@@ -205,9 +205,12 @@
     <!-- Import logic APIs -->
     <script src="js/api.js"></script>
     <script>
-        // Kiểm tra nếu đã login thì chuyển sang trang chủ
+        // Kiểm tra nếu đã login thì chuyển đúng trang theo vai trò
         if (Auth.isLoggedIn()) {
-            window.location.href = 'home.html';
+            const _u = Auth.getUser();
+            if (_u?.vai_tro === 'doi_tac') window.location.href = 'partner-dashboard.html';
+            else if (_u?.vai_tro === 'admin') window.location.href = 'admin-dashboard.html';
+            else window.location.href = 'home.html';
         }
 
         function switchTab(tabId) {
@@ -237,7 +240,13 @@
 
                 Auth.setSession(res.access_token, res.user);
                 showToast('Đăng nhập thành công!', 'success');
-                setTimeout(() => window.location.href = 'home.html', 1000);
+                // Redirect theo vai trò
+                setTimeout(() => {
+                    const vai_tro = res.user?.vai_tro;
+                    if (vai_tro === 'doi_tac') window.location.href = 'partner-dashboard.html';
+                    else if (vai_tro === 'admin') window.location.href = 'admin-dashboard.html';
+                    else window.location.href = 'home.html';
+                }, 1000);
             } catch (err) {
                 showToast(err.message, 'error');
             }

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Đăng ký Đối tác | VoucherHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{extend:{colors:{
+      "primary":"#004ac6","primary-container":"#2563eb","on-primary":"#ffffff",
+      "on-primary-container":"#eeefff","surface":"#f8f9ff","on-surface":"#0b1c30",
+      "surface-container-lowest":"#ffffff","surface-variant":"#d3e4fe",
+      "on-surface-variant":"#434655","outline":"#737686","outline-variant":"#c3c6d7",
+      "background":"#f8f9ff","error":"#ba1a1a","error-container":"#ffdad6",
+      "secondary":"#006c49","secondary-container":"#6cf8bb","on-secondary-container":"#00714d",
+      "secondary-fixed":"#6ffbbe","tertiary":"#784b00","surface-container":"#e5eeff",
+      "surface-container-low":"#eff4ff","surface-container-high":"#dce9ff",
+      "on-background":"#0b1c30","primary-fixed":"#dbe1ff"
+    }}}
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .glass-panel { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
+  .step-transition { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .animate-in { animation: fadeIn 0.35s ease-out forwards; }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<main class="min-h-screen flex flex-col md:flex-row">
+
+  <!-- Left: Hero -->
+  <section class="relative w-full md:w-5/12 lg:w-1/2 flex items-center justify-center p-8 md:p-12 overflow-hidden bg-primary">
+    <div class="absolute inset-0 z-0">
+      <img alt="Partner hero" class="w-full h-full object-cover opacity-20 mix-blend-overlay" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1280&q=80"/>
+    </div>
+    <div class="relative z-10 max-w-lg text-on-primary">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+        </div>
+        <span class="text-2xl font-bold">VoucherHub</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">Phát triển kinh doanh cùng VoucherHub</h1>
+      <p class="text-lg opacity-90 mb-10">Tiếp cận hàng triệu khách hàng thông qua nền tảng voucher số bảo mật hàng đầu.</p>
+      <div class="space-y-4">
+        <div class="flex items-start gap-4 glass-panel p-4 rounded-xl">
+          <span class="material-symbols-outlined text-secondary-fixed text-3xl">public</span>
+          <div>
+            <h3 class="font-semibold text-lg">Tiếp cận rộng lớn</h3>
+            <p class="text-sm opacity-80">Kết nối khách hàng khắp cả nước một cách nhanh chóng.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 glass-panel p-4 rounded-xl">
+          <span class="material-symbols-outlined text-secondary-fixed text-3xl">payments</span>
+          <div>
+            <h3 class="font-semibold text-lg">Thanh toán tức thì</h3>
+            <p class="text-sm opacity-80">Quyết toán tự động và theo dõi tài chính minh bạch.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 glass-panel p-4 rounded-xl">
+          <span class="material-symbols-outlined text-secondary-fixed text-3xl">dashboard_customize</span>
+          <div>
+            <h3 class="font-semibold text-lg">Quản lý dễ dàng</h3>
+            <p class="text-sm opacity-80">Trang quản trị trực quan theo dõi kho hàng và chi nhánh.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right: Form -->
+  <section class="w-full md:w-7/12 lg:w-1/2 bg-surface-container-lowest flex items-center justify-center p-6 md:p-12 lg:p-16">
+    <div class="w-full max-w-md animate-in">
+      <div class="mb-8 text-center md:text-left">
+        <div class="inline-flex items-center gap-2 mb-4">
+          <span class="p-2 bg-primary-container text-on-primary rounded-xl">
+            <span class="material-symbols-outlined">storefront</span>
+          </span>
+          <span class="text-lg font-bold text-primary">Cổng Thông Tin Đối Tác</span>
+        </div>
+        <h2 class="text-3xl font-bold text-on-surface">Trở thành Đối tác</h2>
+        <p class="text-sm text-on-surface-variant mt-2">Bắt đầu bán voucher của bạn chỉ trong vài phút.</p>
+      </div>
+
+      <!-- Progress -->
+      <div class="flex items-center justify-between mb-8 px-2">
+        <div class="flex flex-col items-center gap-1">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-primary text-on-primary font-bold text-sm" id="step-indicator-1">1</div>
+          <span class="text-xs font-semibold text-primary">Tài khoản</span>
+        </div>
+        <div class="flex-1 h-[2px] bg-surface-variant mx-3 mb-5">
+          <div class="h-full bg-primary w-0 transition-all duration-500" id="progress-bar"></div>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center bg-surface-variant text-on-surface-variant font-bold text-sm" id="step-indicator-2">2</div>
+          <span class="text-xs font-semibold text-on-surface-variant" id="step-label-2">Doanh nghiệp</span>
+        </div>
+      </div>
+
+      <form id="registration-form" class="space-y-5">
+        <!-- Step 1: Tài khoản -->
+        <div id="step-1" class="step-transition space-y-4">
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-on-surface-variant" for="email">Địa chỉ Email <span class="text-error">*</span></label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">mail</span>
+              <input class="w-full pl-10 pr-4 py-3 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" id="email" type="email" placeholder="contact@business.com" required/>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-on-surface-variant" for="password">Mật khẩu <span class="text-error">*</span></label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">lock</span>
+              <input class="w-full pl-10 pr-12 py-3 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" id="password" type="password" placeholder="Tối thiểu 6 ký tự" required/>
+              <button type="button" onclick="togglePwd('password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary">
+                <span class="material-symbols-outlined text-[20px]">visibility_off</span>
+              </button>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-on-surface-variant" for="password-confirm">Xác nhận mật khẩu <span class="text-error">*</span></label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">check_circle</span>
+              <input class="w-full pl-10 pr-4 py-3 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" id="password-confirm" type="password" placeholder="Nhập lại mật khẩu" required/>
+            </div>
+          </div>
+          <button type="button" onclick="nextStep()"
+            class="w-full bg-primary text-on-primary py-3.5 rounded-full font-semibold text-sm hover:brightness-110 transition-all shadow-md active:scale-95 flex justify-center items-center gap-2 mt-2">
+            Tiếp theo: Thông tin doanh nghiệp
+            <span class="material-symbols-outlined text-base">arrow_forward</span>
+          </button>
+        </div>
+
+        <!-- Step 2: Doanh nghiệp -->
+        <div id="step-2" class="hidden step-transition space-y-4">
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-on-surface-variant" for="ten_doanh_nghiep">Tên Doanh nghiệp <span class="text-error">*</span></label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">business</span>
+              <input class="w-full pl-10 pr-4 py-3 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" id="ten_doanh_nghiep" type="text" placeholder="Công ty TNHH ABC" required/>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="block text-sm font-medium text-on-surface-variant" for="ma_so_thue">Mã số thuế</label>
+              <input class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" id="ma_so_thue" type="text" placeholder="0102030405"/>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-sm font-medium text-on-surface-variant" for="nguoi_dai_dien">Người đại diện</label>
+              <input class="w-full px-4 py-3 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" id="nguoi_dai_dien" type="text" placeholder="Nguyễn Văn A"/>
+            </div>
+          </div>
+
+          <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30 flex items-start gap-3">
+            <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">info</span>
+            <p class="text-xs text-on-surface-variant">Hồ sơ của bạn sẽ được Admin xem xét và phê duyệt trong vòng <strong>24 giờ</strong>. Bạn sẽ được thông báo qua email khi tài khoản được kích hoạt.</p>
+          </div>
+
+          <div class="flex gap-3 mt-2">
+            <button type="button" onclick="prevStep()"
+              class="flex-1 bg-surface-container-high text-on-surface py-3.5 rounded-full font-semibold text-sm hover:brightness-95 transition-all active:scale-95 border border-outline-variant">
+              Quay lại
+            </button>
+            <button type="submit" id="submit-btn"
+              class="flex-[2] bg-primary text-on-primary py-3.5 rounded-full font-semibold text-sm hover:brightness-110 transition-all shadow-md active:scale-95 flex justify-center items-center gap-2">
+              <span class="material-symbols-outlined text-base">how_to_reg</span>
+              Hoàn tất Đăng ký
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <p class="mt-8 text-center text-xs text-on-surface-variant">
+        Đã có tài khoản đối tác?
+        <a class="text-primary font-bold hover:underline" href="index.html">Đăng nhập tại đây</a>
+        &nbsp;·&nbsp;
+        <a class="text-on-surface-variant hover:underline" href="index.html">Về trang chủ</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<script src="js/api.js"></script>
+<script>
+  // Redirect nếu đã đăng nhập là đối tác
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = Auth.getUser();
+    if (user?.vai_tro === 'doi_tac') window.location.href = 'partner-dashboard.html';
+  });
+
+  function nextStep() {
+    const email = document.getElementById('email').value.trim();
+    const pwd = document.getElementById('password').value;
+    const conf = document.getElementById('password-confirm').value;
+
+    if (!email || !pwd || !conf) { showToast('Vui lòng điền đầy đủ thông tin!', 'error'); return; }
+    if (pwd.length < 6) { showToast('Mật khẩu phải ít nhất 6 ký tự!', 'error'); return; }
+    if (pwd !== conf) { showToast('Mật khẩu xác nhận không khớp!', 'error'); return; }
+
+    document.getElementById('step-1').classList.add('hidden');
+    document.getElementById('step-2').classList.remove('hidden');
+    document.getElementById('step-indicator-2').className = 'w-8 h-8 rounded-full flex items-center justify-center bg-primary text-on-primary font-bold text-sm';
+    document.getElementById('step-label-2').className = 'text-xs font-semibold text-primary';
+    document.getElementById('progress-bar').style.width = '100%';
+  }
+
+  function prevStep() {
+    document.getElementById('step-2').classList.add('hidden');
+    document.getElementById('step-1').classList.remove('hidden');
+    document.getElementById('step-indicator-2').className = 'w-8 h-8 rounded-full flex items-center justify-center bg-surface-variant text-on-surface-variant font-bold text-sm';
+    document.getElementById('step-label-2').className = 'text-xs font-semibold text-on-surface-variant';
+    document.getElementById('progress-bar').style.width = '0%';
+  }
+
+  function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const icon = btn.querySelector('.material-symbols-outlined');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    icon.textContent = inp.type === 'password' ? 'visibility_off' : 'visibility';
+  }
+
+  document.getElementById('registration-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const ten_dn = document.getElementById('ten_doanh_nghiep').value.trim();
+    if (!ten_dn) { showToast('Vui lòng nhập tên doanh nghiệp!', 'error'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Đang xử lý...';
+
+    try {
+      const res = await apiFetch('/api/auth/register-partner', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value,
+          ten_doanh_nghiep: ten_dn,
+          nguoi_dai_dien: document.getElementById('nguoi_dai_dien').value.trim() || undefined,
+          ma_so_thue: document.getElementById('ma_so_thue').value.trim() || undefined,
+        })
+      });
+
+      showToast(res.message || 'Đăng ký thành công! Vui lòng chờ Admin phê duyệt.', 'success');
+      setTimeout(() => window.location.href = 'index.html', 2500);
+    } catch (err) {
+      showToast(err.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined text-base">how_to_reg</span> Hoàn tất Đăng ký';
+    }
+  });
+</script>
+</body>
+</html>

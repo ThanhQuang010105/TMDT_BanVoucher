@@ -32,6 +32,12 @@ export class AuthController {
     return this.authService.registerPartner(dto);
   }
 
+  // POST /api/auth/register-admin
+  @Post('register-admin')
+  registerAdmin(@Body() dto: RegisterDto) {
+    return this.authService.registerAdmin(dto);
+  }
+
   // POST /api/auth/login
   @Post('login')
   @HttpCode(HttpStatus.OK)

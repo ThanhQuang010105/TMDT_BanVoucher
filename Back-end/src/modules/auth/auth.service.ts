@@ -73,6 +73,45 @@ export class AuthService {
     };
   }
 
+  // ─── ĐĂNG KÝ TÀI KHOẢN ADMIN ──────────────────────────────────────────
+  async registerAdmin(dto: RegisterDto) {
+    const adminClient = this.supabaseService.getClient();
+
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+      email: dto.email,
+      password: dto.password,
+      email_confirm: true,
+    });
+
+    if (authError) {
+      if (authError.message.toLowerCase().includes('already registered') ||
+          authError.message.toLowerCase().includes('already been registered') ||
+          (authError as any).code === 'email_exists') {
+        throw new ConflictException('Email này đã được sử dụng. Vui lòng đăng nhập.');
+      }
+      throw new BadRequestException(authError.message);
+    }
+
+    const userId = authData.user?.id;
+    if (!userId) throw new InternalServerErrorException('Không thể tạo tài khoản Auth.');
+
+    const { error: tkError } = await adminClient.from('tai_khoan').insert({
+      ma_tk: userId,
+      username: dto.email,
+      vai_tro: 'admin',
+      trang_thai_hoat_dong: 'active',
+    });
+
+    if (tkError) throw new InternalServerErrorException(`Lỗi tạo tai_khoan: ${tkError.message}`);
+
+    await this.supabaseService.writeLog(userId, 'Đăng ký tài khoản Admin mới');
+
+    return {
+      success: true,
+      message: 'Đăng ký tài khoản Admin thành công!',
+    };
+  }
+
   // ─── ĐĂNG KÝ TÀI KHOẢN ĐỐI TÁC (BR-PAR-01) ──────────────────────────────────
   async registerPartner(dto: RegisterPartnerDto) {
     const adminClient = this.supabaseService.getClient();
@@ -82,6 +121,7 @@ export class AuthService {
       email: dto.email,
       password: dto.password,
       email_confirm: true,
+      user_metadata: { role: 'doi_tac' },
     });
 
     if (authError) {

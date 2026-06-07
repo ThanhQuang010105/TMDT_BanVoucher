@@ -43,6 +43,12 @@ export class VouchersController {
     return this.vouchersService.getCategories();
   }
 
+  // GET /api/vouchers/phan-loai  → Danh sách phân loại voucher
+  @Get('phan-loai')
+  getPhanLoai() {
+    return this.vouchersService.getPhanLoai();
+  }
+
   // GET /api/vouchers?keyword=&ma_taxon=&page=  → Tìm kiếm & lọc
   @Get()
   searchVouchers(@Query() dto: SearchVoucherDto) {
@@ -61,16 +67,19 @@ export class VouchersController {
   @Get('admin/all')
   @UseGuards(SupabaseAuthGuard, RolesGuard)
   @Roles('admin', 'doi_tac')
-  getAllVouchers() {
-    return this.vouchersService.getAllVouchers();
+  getAllVouchers(@CurrentUser('id') userId: string) {
+    return this.vouchersService.getAllVouchers(userId);
   }
 
   // Tìm kiếm lọc nâng cao cho Admin / Đối tác
   @Get('admin/search')
   @UseGuards(SupabaseAuthGuard, RolesGuard)
   @Roles('admin', 'doi_tac')
-  searchVoucherForAdmin(@Query() query: any) {
-    return this.vouchersService.searchVoucherForAdmin(query);
+  searchVoucherForAdmin(
+    @CurrentUser('id') userId: string,
+    @Query() query: any,
+  ) {
+    return this.vouchersService.searchVoucherForAdmin(query, userId);
   }
 
   // Lấy chi nhánh của đối tác

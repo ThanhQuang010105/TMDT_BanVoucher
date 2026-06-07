@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quản lý Voucher - Đối tác | VoucherHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme:{extend:{colors:{
+      "primary":"#004ac6","primary-container":"#2563eb","on-primary":"#ffffff",
+      "on-primary-container":"#eeefff","surface":"#f8f9ff","on-surface":"#0b1c30",
+      "surface-container-lowest":"#ffffff","surface-variant":"#d3e4fe",
+      "on-surface-variant":"#434655","outline":"#737686","outline-variant":"#c3c6d7",
+      "background":"#f8f9ff","error":"#ba1a1a","error-container":"#ffdad6",
+      "secondary":"#006c49","secondary-container":"#6cf8bb","on-secondary-container":"#00714d",
+      "surface-container":"#e5eeff","surface-container-low":"#eff4ff",
+      "surface-container-high":"#dce9ff","on-background":"#0b1c30",
+      "tertiary":"#784b00","tertiary-fixed":"#ffddb8","on-tertiary-fixed":"#2a1700"
+    }}}
+  }
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+</style>
+</head>
+<body class="bg-background text-on-surface">
+
+<header class="flex justify-between items-center px-6 md:px-8 h-16 sticky top-0 z-50 bg-surface-container-lowest shadow-sm border-b border-outline-variant">
+  <div class="flex items-center gap-6">
+    <a href="partner-dashboard.html" class="flex items-center gap-2 text-primary font-bold text-lg">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">confirmation_number</span>VoucherHub Partner
+    </a>
+    <nav class="hidden md:flex gap-6">
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-dashboard.html">Tổng quan</a>
+      <a class="text-sm text-primary font-semibold border-b-2 border-primary pb-1" href="#">Kho Voucher</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-profile.html">Hồ sơ & Chi nhánh</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-redemption.html">Xác thực mã</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <button onclick="openModal()" class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">
+      <span class="material-symbols-outlined text-[18px]">add</span>Tạo Voucher mới
+    </button>
+    <div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm" id="user-avatar">?</div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 md:px-8 py-8 pb-24 lg:pb-8">
+  <div class="mb-6 flex justify-between items-end">
+    <div>
+      <h1 class="text-2xl font-bold">Danh mục Voucher</h1>
+      <p class="text-sm text-on-surface-variant mt-1">Quản lý và theo dõi hiệu suất voucher của bạn.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <select id="status-filter" onchange="loadVouchers()" class="text-sm border border-outline-variant rounded-lg px-3 py-2 focus:outline-none focus:border-primary">
+        <option value="">Tất cả trạng thái</option>
+        <option value="active">Đang bán</option>
+        <option value="pending_approval">Chờ duyệt</option>
+        <option value="draft">Nháp</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="bg-surface-container-low border-b border-outline-variant">
+            <th class="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Voucher</th>
+            <th class="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Giá</th>
+            <th class="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Kho hàng</th>
+            <th class="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Thời hạn</th>
+            <th class="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Trạng thái</th>
+            <th class="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="voucher-tbody" class="divide-y divide-outline-variant/30">
+          <tr><td colspan="6" class="py-12 text-center text-on-surface-variant">
+            <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>Đang tải...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Mobile Bottom Nav -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-lowest shadow-lg border-t border-outline-variant">
+  <a href="partner-dashboard.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">dashboard</span><span>Tổng quan</span></a>
+  <button class="flex flex-col items-center text-primary text-xs font-bold"><span class="material-symbols-outlined">confirmation_number</span><span>Voucher</span></button>
+  <a href="partner-redemption.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">qr_code_2</span><span>Xác thực</span></a>
+  <a href="partner-profile.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">person</span><span>Hồ sơ</span></a>
+</nav>
+
+<!-- Create/Edit Modal -->
+<div id="voucher-modal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+  <div class="bg-surface-container-lowest w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-white sticky top-0">
+      <div>
+        <h3 class="text-xl font-bold" id="modal-title">Tạo Voucher mới</h3>
+        <p class="text-xs text-on-surface-variant mt-1">Điền thông tin chi tiết voucher</p>
+      </div>
+      <button onclick="closeModal()" class="p-2 hover:bg-surface-container rounded-full">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="voucher-form" class="p-6 overflow-y-auto space-y-6 flex-1">
+      <input type="hidden" id="edit-id"/>
+      <div class="space-y-4">
+        <h4 class="text-sm font-bold text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-[16px]">info</span>Thông tin cơ bản
+        </h4>
+        <div>
+          <label class="block text-sm font-medium text-on-surface-variant mb-1">Tên Voucher <span class="text-error">*</span></label>
+          <input id="v-ten" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm" type="text" placeholder="VD: Combo Cà phê cho 2 người"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-on-surface-variant mb-1">Mô tả</label>
+          <textarea id="v-mota" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm resize-none" rows="3" placeholder="Điều kiện áp dụng..."></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Phân loại <span class="text-error">*</span></label>
+            <select id="v-pl" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary outline-none text-sm">
+              <option value="">-- Chọn phân loại --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Danh mục <span class="text-error">*</span></label>
+            <select id="v-taxon" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary outline-none text-sm">
+              <option value="">-- Chọn danh mục --</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <hr class="border-outline-variant/30"/>
+      <div class="space-y-4">
+        <h4 class="text-sm font-bold text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-[16px]">payments</span>Giá & Kho hàng
+        </h4>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Giá gốc (đ) <span class="text-error">*</span></label>
+            <input id="v-gia-goc" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm" type="number" min="0" placeholder="200000"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Giá bán (đ) <span class="text-error">*</span></label>
+            <input id="v-gia-ban" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm" type="number" min="0" placeholder="150000"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Số lượng <span class="text-error">*</span></label>
+            <input id="v-sl" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm" type="number" min="1" placeholder="100"/>
+          </div>
+        </div>
+      </div>
+      <hr class="border-outline-variant/30"/>
+      <div class="space-y-4">
+        <h4 class="text-sm font-bold text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-[16px]">calendar_month</span>Thời gian chiến dịch
+        </h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Ngày bắt đầu <span class="text-error">*</span></label>
+            <input id="v-ngay-bd" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary outline-none text-sm" type="datetime-local"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface-variant mb-1">Ngày kết thúc <span class="text-error">*</span></label>
+            <input id="v-ngay-kt" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary outline-none text-sm" type="datetime-local"/>
+          </div>
+        </div>
+      </div>
+    </form>
+    <div class="px-6 py-4 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+      <button onclick="closeModal()" class="px-5 py-2 rounded-xl text-sm font-medium text-on-surface-variant hover:bg-surface-variant transition-colors">Hủy</button>
+      <button onclick="saveVoucher(false)" id="save-draft-btn" class="px-5 py-2 rounded-xl text-sm font-medium border border-outline-variant hover:bg-surface-container transition-colors">Lưu nháp</button>
+      <button onclick="saveVoucher(true)" id="save-submit-btn" class="px-6 py-2 rounded-full bg-primary text-white text-sm font-semibold hover:brightness-110 transition-all shadow-md active:scale-95">Gửi duyệt</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  let editingId = null;
+  let categories = [];
+  let phanLoais = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = Auth.getUser();
+    if (!user || user.vai_tro !== 'doi_tac') { window.location.href = 'index.html'; return; }
+    document.getElementById('user-avatar').textContent = (user.email?.[0] || '?').toUpperCase();
+    await Promise.all([loadVouchers(), loadCategories()]);
+  });
+
+  async function loadVouchers() {
+    const tbody = document.getElementById('voucher-tbody');
+    tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-on-surface-variant"><div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div></td></tr>`;
+    try {
+      const res = await apiFetch('/api/vouchers/admin/all');
+      renderTable(res.data || []);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-error">${err.message}</td></tr>`;
+    }
+  }
+
+  async function loadCategories() {
+    try {
+      const [catRes, plRes] = await Promise.all([
+        apiFetch('/api/vouchers/categories'),
+        apiFetch('/api/vouchers/phan-loai')
+      ]);
+
+      // Render danh muc (taxon)
+      categories = catRes.data || [];
+      const taxonSel = document.getElementById('v-taxon');
+      taxonSel.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+      categories.forEach(c => taxonSel.innerHTML += `<option value="${c.ma_taxon}">${c.ten_taxon}</option>`);
+
+      // Render phan loai từ API thực
+      phanLoais = plRes.data || [];
+      const plSel = document.getElementById('v-pl');
+      plSel.innerHTML = '<option value="">-- Chọn phân loại --</option>';
+      if (phanLoais.length === 0) {
+        // Fallback nếu DB chưa có dữ liệu, dùng seed defaults
+        plSel.innerHTML += '<option value="PL_PHAN_TRAM">Giảm phần trăm</option>';
+        plSel.innerHTML += '<option value="PL_TIEN_MAT">Giảm tiền mặt</option>';
+      } else {
+        phanLoais.forEach(pl => plSel.innerHTML += `<option value="${pl.ma_pl}">${pl.ten_loai_voucher}</option>`);
+      }
+    } catch (err) {
+      console.error('loadCategories error:', err);
+      // Fallback
+      const plSel = document.getElementById('v-pl');
+      plSel.innerHTML = '<option value="PL_PHAN_TRAM">Giảm phần trăm</option><option value="PL_TIEN_MAT">Giảm tiền mặt</option>';
+    }
+  }
+
+  const statusMap = {
+    active: ['bg-secondary-container text-on-secondary-container','Đang bán'],
+    pending_approval: ['bg-tertiary-fixed text-on-tertiary-fixed','Chờ duyệt'],
+    draft: ['bg-surface-variant text-on-surface-variant','Nháp'],
+    rejected: ['bg-error-container text-on-error-container','Từ chối'],
+  };
+
+  function renderTable(vouchers) {
+    const tbody = document.getElementById('voucher-tbody');
+    if (!vouchers.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-on-surface-variant">
+        <span class="material-symbols-outlined text-4xl block mb-2 text-outline-variant">inventory_2</span>
+        Chưa có voucher nào. Hãy tạo voucher đầu tiên!
+      </td></tr>`;
+      return;
+    }
+    const filter = document.getElementById('status-filter').value;
+    const filtered = filter ? vouchers.filter(v => v.trang_thai === filter) : vouchers;
+    tbody.innerHTML = filtered.map(v => {
+      const pct = v.so_luong_phat_hanh ? Math.round(v.so_luong_da_ban / v.so_luong_phat_hanh * 100) : 0;
+      const [cls, label] = statusMap[v.trang_thai] || ['bg-surface-variant text-on-surface-variant', v.trang_thai];
+      return `<tr class="hover:bg-surface-container-low/50 transition-colors">
+        <td class="px-5 py-4">
+          <p class="text-sm font-semibold text-on-surface line-clamp-1">${v.ten_voucher}</p>
+          <p class="text-[11px] text-outline font-mono">${v.ma_voucher}</p>
+        </td>
+        <td class="px-5 py-4">
+          <p class="text-sm font-semibold text-on-surface">${formatCurrency(v.gia_ban)}</p>
+          <p class="text-xs text-outline line-through">${formatCurrency(v.gia_goc)}</p>
+        </td>
+        <td class="px-5 py-4 w-40">
+          <div class="flex justify-between text-xs mb-1"><span>${v.so_luong_da_ban}/${v.so_luong_phat_hanh}</span><span class="text-outline">${pct}%</span></div>
+          <div class="h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+            <div class="h-full bg-primary" style="width:${pct}%"></div>
+          </div>
+        </td>
+        <td class="px-5 py-4 hidden md:table-cell">
+          <p class="text-xs text-on-surface">${formatDate(v.ngay_bd)} → ${formatDate(v.ngay_kt)}</p>
+        </td>
+        <td class="px-5 py-4">
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${cls}">${label}</span>
+        </td>
+        <td class="px-5 py-4">
+          <div class="flex gap-1">
+            <button onclick='editVoucher(${JSON.stringify(v).replace(/'/g,"&#39;")})' class="p-1.5 hover:bg-surface-container rounded-full text-on-surface-variant hover:text-primary">
+              <span class="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+            <button onclick="deleteVoucher('${v.ma_voucher}','${v.ten_voucher.replace(/'/g,"")}')" class="p-1.5 hover:bg-error-container/20 rounded-full text-on-surface-variant hover:text-error">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function openModal(v = null) {
+    editingId = v?.ma_voucher || null;
+    document.getElementById('modal-title').textContent = v ? 'Chỉnh sửa Voucher' : 'Tạo Voucher mới';
+    document.getElementById('edit-id').value = editingId || '';
+    document.getElementById('v-ten').value = v?.ten_voucher || '';
+    document.getElementById('v-mota').value = v?.mo_ta || '';
+    document.getElementById('v-gia-goc').value = v?.gia_goc || '';
+    document.getElementById('v-gia-ban').value = v?.gia_ban || '';
+    document.getElementById('v-sl').value = v?.so_luong_phat_hanh || '';
+    document.getElementById('v-pl').value = v?.ma_pl || '';
+    document.getElementById('v-taxon').value = v?.ma_taxon || '';
+    document.getElementById('v-ngay-bd').value = v?.ngay_bd ? v.ngay_bd.slice(0,16) : '';
+    document.getElementById('v-ngay-kt').value = v?.ngay_kt ? v.ngay_kt.slice(0,16) : '';
+    const modal = document.getElementById('voucher-modal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('voucher-modal');
+    modal.classList.add('hidden'); modal.classList.remove('flex');
+  }
+
+  function editVoucher(v) { openModal(v); }
+
+  async function saveVoucher(submit) {
+    const ten = document.getElementById('v-ten').value.trim();
+    const giaGoc = Number(document.getElementById('v-gia-goc').value);
+    const giaBan = Number(document.getElementById('v-gia-ban').value);
+    const sl = Number(document.getElementById('v-sl').value);
+    const pl = document.getElementById('v-pl').value;
+    const taxon = document.getElementById('v-taxon').value;
+    const ngayBd = document.getElementById('v-ngay-bd').value;
+    const ngayKt = document.getElementById('v-ngay-kt').value;
+
+    if (!ten || !giaGoc || !giaBan || !sl || !pl || !taxon || !ngayBd || !ngayKt) {
+      showToast('Vui lòng điền đầy đủ các trường bắt buộc!', 'error'); return;
+    }
+    if (giaBan >= giaGoc) { showToast('Giá bán phải nhỏ hơn giá gốc!', 'error'); return; }
+
+    const btn = submit ? document.getElementById('save-submit-btn') : document.getElementById('save-draft-btn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+    // Lấy maDT từ các voucher đã có (nếu có)
+    let maDT = '';
+    try {
+      const vRes = await apiFetch('/api/vouchers/admin/all');
+      maDT = vRes.data?.[0]?.ma_dt || '';
+    } catch (_) {}
+
+    // Payload dùng PascalCase đúng với CreateVoucherDto
+    const payload = {
+      TenVoucher: ten,
+      MoTa: document.getElementById('v-mota').value || '',
+      GiaGoc: giaGoc,
+      GiaBan: giaBan,
+      SoLuongPhatHanh: sl,
+      MaPL: pl,
+      MaTaxon: taxon,
+      MaDT: maDT,
+      bannerUrl: '',
+      NgayBD: new Date(ngayBd).toISOString(),
+      NgayKT: new Date(ngayKt).toISOString()
+    };
+
+    try {
+      if (editingId) {
+        await apiFetch(`/api/vouchers/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        if (submit) await apiFetch(`/api/vouchers/${editingId}/submit`, { method: 'POST' });
+        showToast('Cập nhật voucher thành công!', 'success');
+      } else {
+        const res = await apiFetch('/api/vouchers', { method: 'POST', body: JSON.stringify(payload) });
+        const newId = res.data?.ma_voucher || res.ma_voucher;
+        if (submit && newId) await apiFetch(`/api/vouchers/${newId}/submit`, { method: 'POST' });
+        showToast(submit ? 'Đã gửii duyệt voucher!' : 'Đã lưu nháp!', 'success');
+      }
+      closeModal();
+      await loadVouchers();
+    } catch (err) { showToast(err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = submit ? 'Gửii duyệt' : 'Lưu nháp'; }
+  }
+
+  async function deleteVoucher(maVoucher, name) {
+    if (!confirm(`Xóa voucher "${name}"?`)) return;
+    try {
+      await apiFetch(`/api/vouchers/${maVoucher}`, { method: 'DELETE' });
+      showToast('Đã xóa voucher!', 'success');
+      await loadVouchers();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // Close modal on click outside
+  document.getElementById('voucher-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('voucher-modal')) closeModal();
+  });
+</script>
+</body>
+</html>

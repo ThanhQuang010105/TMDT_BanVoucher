@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>VoucherHub Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#d3e4fe",
+            "on-tertiary": "#ffffff",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#eff4ff",
+            "on-primary-container": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "surface-container": "#e5eeff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#0b1c30",
+            "surface": "#f8f9ff",
+            "background": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "secondary-container": "#6cf8bb",
+            "on-secondary-container": "#00714d",
+            "primary": "#004ac6",
+            "secondary": "#006c49",
+            "tertiary": "#784b00",
+            "error": "#ba1a1a",
+            "on-background": "#0b1c30"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .active-nav {
+      background-color: var(--md-sys-color-primary-container, #2563eb);
+      color: var(--md-sys-color-on-primary-container, #ffffff);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col p-4 z-50">
+    <div class="px-4 py-6 flex items-center gap-2 text-primary font-bold text-xl">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+      <span class="tracking-tight">VoucherHub Admin</span>
+    </div>
+    
+    <nav class="flex-grow space-y-2 mt-4">
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-bold transition-all duration-200" href="admin-dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-users.html">
+        <span class="material-symbols-outlined">group</span>
+        <span>Quản lý Người dùng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-vouchers.html">
+        <span class="material-symbols-outlined">confirmation_number</span>
+        <span>Kiểm duyệt Voucher</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-orders.html">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>Quản lý Đơn hàng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-logs.html">
+        <span class="material-symbols-outlined">history_edu</span>
+        <span>Nhật ký Hệ thống</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-disputes.html">
+        <span class="material-symbols-outlined">gavel</span>
+        <span>Xử lý Khiếu nại</span>
+      </a>
+    </nav>
+
+    <div class="border-t border-outline-variant pt-4">
+      <button onclick="logoutAdmin()" class="flex items-center gap-3 w-full px-4 py-3 text-error hover:bg-error-container/20 rounded-xl transition-all duration-200">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-bold">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-grow pl-64 min-h-screen flex flex-col">
+    <!-- Topbar -->
+    <header class="h-16 border-b border-outline-variant bg-surface-container-lowest flex items-center justify-between px-8 sticky top-0 z-40">
+      <div>
+        <h2 class="text-lg font-bold text-on-surface">Hệ thống Quản trị</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-semibold text-on-surface-variant" id="admin-email">admin@voucherhub.com</span>
+        <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm" id="admin-avatar">A</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="p-8 flex-grow space-y-8 max-w-6xl">
+      <!-- Welcome Section -->
+      <div class="bg-gradient-to-r from-primary to-primary-container rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+        <div class="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
+        <div class="relative z-10">
+          <h1 class="text-2xl font-bold mb-1">Xin chào, Admin! 👋</h1>
+          <p class="text-white/80 text-sm">Chào mừng bạn quay lại bảng điều khiển quản lý VoucherHub.</p>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Stat Card 1 -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-2xl">monetization_on</span>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant font-medium">TỔNG DOANH THU</p>
+            <h3 class="text-xl font-bold" id="stat-revenue">0đ</h3>
+          </div>
+        </div>
+
+        <!-- Stat Card 2 -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+            <span class="material-symbols-outlined text-2xl">group</span>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant font-medium">NGƯỜI DÙNG</p>
+            <h3 class="text-xl font-bold" id="stat-users">0</h3>
+          </div>
+        </div>
+
+        <!-- Stat Card 3 -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-tertiary/10 flex items-center justify-center text-tertiary">
+            <span class="material-symbols-outlined text-2xl">confirmation_number</span>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant font-medium">TỔNG VOUCHER</p>
+            <h3 class="text-xl font-bold" id="stat-vouchers">0</h3>
+          </div>
+        </div>
+
+        <!-- Stat Card 4 -->
+        <div class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/30 shadow-sm flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error">
+            <span class="material-symbols-outlined text-2xl">receipt_long</span>
+          </div>
+          <div>
+            <p class="text-xs text-on-surface-variant font-medium">ĐƠN HÀNG</p>
+            <h3 class="text-xl font-bold" id="stat-orders">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts & Recents Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chart -->
+        <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/30 shadow-sm flex flex-col justify-between">
+          <div class="mb-4">
+            <h3 class="font-bold text-on-surface">Doanh thu 7 ngày gần đây</h3>
+          </div>
+          <div class="h-64 relative">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+
+        <!-- System Status / Quick Actions -->
+        <div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/30 shadow-sm space-y-6">
+          <h3 class="font-bold text-on-surface">Lối tắt Quản trị</h3>
+          
+          <div class="space-y-3">
+            <a href="admin-vouchers.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">confirmation_number</span>
+              </div>
+              <div class="flex-grow">
+                <h4 class="text-sm font-semibold">Duyệt Voucher</h4>
+                <p class="text-xs text-on-surface-variant">Xem các voucher đang đợi xét duyệt</p>
+              </div>
+              <span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+            </a>
+
+            <a href="admin-users.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors">
+              <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+                <span class="material-symbols-outlined">verified_user</span>
+              </div>
+              <div class="flex-grow">
+                <h4 class="text-sm font-semibold">Duyệt Đối Tác</h4>
+                <p class="text-xs text-on-surface-variant">Phê duyệt đối tác đăng ký mới</p>
+              </div>
+              <span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+            </a>
+
+            <a href="admin-disputes.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container transition-colors">
+              <div class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center text-error">
+                <span class="material-symbols-outlined">gavel</span>
+              </div>
+              <div class="flex-grow">
+                <h4 class="text-sm font-semibold">Khiếu nại</h4>
+                <p class="text-xs text-on-surface-variant">Giải quyết tranh chấp & hỗ trợ khách hàng</p>
+              </div>
+              <span class="material-symbols-outlined text-sm text-outline">chevron_right</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let myChart = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Xác thực
+      const user = Auth.getUser();
+      if (!user || user.vai_tro !== 'admin') {
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('admin-email').textContent = user.email || 'Admin';
+      document.getElementById('admin-avatar').textContent = (user.email?.[0] || 'A').toUpperCase();
+
+      await loadStats();
+    });
+
+    async function loadStats() {
+      try {
+        const res = await apiFetch('/api/admin/stats');
+        if (res.success && res.data) {
+          const stats = res.data;
+          document.getElementById('stat-revenue').textContent = formatCurrency(stats.totalRevenue);
+          document.getElementById('stat-users').textContent = stats.usersCount;
+          document.getElementById('stat-vouchers').textContent = stats.vouchersCount;
+          document.getElementById('stat-orders').textContent = stats.ordersCount;
+
+          renderChart(stats.revenueChart || []);
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi tải thống kê', 'error');
+        // Render empty chart if error
+        renderChart([]);
+      }
+    }
+
+    function renderChart(chartData) {
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      const labels = chartData.map(d => d.label);
+      const values = chartData.map(d => d.value);
+
+      if (myChart) {
+        myChart.destroy();
+      }
+
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.length ? labels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Doanh thu (VND)',
+            data: values.length ? values : [0, 0, 0, 0, 0, 0, 0],
+            borderColor: '#004ac6',
+            backgroundColor: 'rgba(0, 74, 198, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return formatCurrency(value);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function logoutAdmin() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+      } catch (_) {}
+      Auth.clear();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

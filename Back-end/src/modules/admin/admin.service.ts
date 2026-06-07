@@ -6,11 +6,26 @@ export class AdminService {
   constructor(private supabase: SupabaseService) {}
 
   async getAllUsers() {
-    const { data, error } = await this.supabase
-      .getClient()
-      .auth.admin.listUsers();
+    const client = this.supabase.getClient();
+    const { data: authData, error } = await client.auth.admin.listUsers();
     if (error) throw new BadRequestException(error.message);
-    return { success: true, data: data.users, message: 'Lấy danh sách user thành công' };
+
+    const { data: dbUsers, error: dbError } = await client
+      .from('tai_khoan')
+      .select('ma_tk, vai_tro, trang_thai_hoat_dong');
+
+    const dbUsersMap = new Map((dbUsers || []).map(u => [u.ma_tk, u]));
+
+    const users = authData.users.map(u => {
+      const dbUser = dbUsersMap.get(u.id);
+      return {
+        ...u,
+        db_role: dbUser?.vai_tro || null,
+        db_status: dbUser?.trang_thai_hoat_dong || null,
+      };
+    });
+
+    return { success: true, data: users, message: 'Lấy danh sách user thành công' };
   }
 
   async banUser(userId: string) {
@@ -215,6 +230,72 @@ export class AdminService {
 
     if (error) throw new BadRequestException(error.message);
     return { success: true, data };
+  }
+
+  async getAllOrders() {
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('don_hang')
+      .select('*, khach_hang(ho_ten, email)')
+      .order('ngay_tao_don', { ascending: false });
+    if (error) throw new BadRequestException(error.message);
+    return { success: true, data, message: 'Lấy danh sách đơn hàng thành công' };
+  }
+
+  async getDashboardStats() {
+    const client = this.supabase.getClient();
+
+    const { data: orders, error: ordersError } = await client
+      .from('don_hang')
+      .select('tong_tien, trang_thai_thanh_toan, ngay_tao_don');
+    if (ordersError) throw new BadRequestException(ordersError.message);
+
+    const successfulOrders = (orders || []).filter(o => 
+      o.trang_thai_thanh_toan === 'thanh_cong' || 
+      o.trang_thai_thanh_toan === 'completed' || 
+      o.trang_thai_thanh_toan === 'Hoàn thành' || 
+      o.trang_thai_thanh_toan === 'success'
+    );
+    const totalRevenue = successfulOrders.reduce((sum, o) => sum + Number(o.tong_tien || 0), 0);
+
+    const { count: usersCount, error: usersError } = await client
+      .from('tai_khoan')
+      .select('*', { count: 'exact', head: true });
+    if (usersError) throw new BadRequestException(usersError.message);
+
+    const { count: vouchersCount, error: vouchersError } = await client
+      .from('voucher')
+      .select('*', { count: 'exact', head: true });
+    if (vouchersError) throw new BadRequestException(vouchersError.message);
+
+    const revenue7Days = Array(7).fill(0).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return {
+        dateStr: d.toLocaleDateString('vi-VN', { weekday: 'short' }),
+        dateKey: d.toISOString().split('T')[0],
+        value: 0
+      };
+    }).reverse();
+
+    successfulOrders.forEach(o => {
+      const orderDate = new Date(o.ngay_tao_don).toISOString().split('T')[0];
+      const match = revenue7Days.find(r => r.dateKey === orderDate);
+      if (match) {
+        match.value += Number(o.tong_tien || 0);
+      }
+    });
+
+    return {
+      success: true,
+      data: {
+        totalRevenue,
+        usersCount: usersCount || 0,
+        vouchersCount: vouchersCount || 0,
+        ordersCount: orders?.length || 0,
+        revenueChart: revenue7Days.map(r => ({ label: r.dateStr, value: r.value }))
+      }
+    };
   }
 }
 

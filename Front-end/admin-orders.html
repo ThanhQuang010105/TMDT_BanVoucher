@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Quản lý Đơn hàng - VoucherHub</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#d3e4fe",
+            "on-tertiary": "#ffffff",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#eff4ff",
+            "on-primary-container": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "surface-container": "#e5eeff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#0b1c30",
+            "surface": "#f8f9ff",
+            "background": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "secondary-container": "#6cf8bb",
+            "on-secondary-container": "#00714d",
+            "primary": "#004ac6",
+            "secondary": "#006c49",
+            "tertiary": "#784b00",
+            "error": "#ba1a1a",
+            "on-background": "#0b1c30"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col p-4 z-50">
+    <div class="px-4 py-6 flex items-center gap-2 text-primary font-bold text-xl">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+      <span class="tracking-tight">VoucherHub Admin</span>
+    </div>
+    
+    <nav class="flex-grow space-y-2 mt-4">
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-users.html">
+        <span class="material-symbols-outlined">group</span>
+        <span>Quản lý Người dùng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-vouchers.html">
+        <span class="material-symbols-outlined">confirmation_number</span>
+        <span>Kiểm duyệt Voucher</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-bold transition-all duration-200" href="admin-orders.html">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>Quản lý Đơn hàng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-logs.html">
+        <span class="material-symbols-outlined">history_edu</span>
+        <span>Nhật ký Hệ thống</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-disputes.html">
+        <span class="material-symbols-outlined">gavel</span>
+        <span>Xử lý Khiếu nại</span>
+      </a>
+    </nav>
+
+    <div class="border-t border-outline-variant pt-4">
+      <button onclick="logoutAdmin()" class="flex items-center gap-3 w-full px-4 py-3 text-error hover:bg-error-container/20 rounded-xl transition-all duration-200">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-bold">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-grow pl-64 min-h-screen flex flex-col">
+    <!-- Topbar -->
+    <header class="h-16 border-b border-outline-variant bg-surface-container-lowest flex items-center justify-between px-8 sticky top-0 z-40">
+      <div>
+        <h2 class="text-lg font-bold text-on-surface">Quản lý Đơn hàng</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-semibold text-on-surface-variant" id="admin-email">admin@voucherhub.com</span>
+        <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm" id="admin-avatar">A</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="p-8 flex-grow space-y-6 max-w-6xl">
+      <!-- Search & Filters -->
+      <div class="flex justify-between items-center bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm gap-4">
+        <div class="relative flex-grow max-w-md">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[20px]">search</span>
+          <input type="text" id="search-input" oninput="filterOrders()" placeholder="Tìm kiếm mã đơn hàng..." class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary">
+        </div>
+        <div class="flex items-center gap-2">
+          <select id="filter-status" onchange="filterOrders()" class="bg-surface border border-outline-variant rounded-xl text-sm py-2 px-4 focus:outline-none focus:border-primary">
+            <option value="">Tất cả trạng thái</option>
+            <option value="thanh_cong">Thành công</option>
+            <option value="cho_thanh_toan">Chờ thanh toán</option>
+            <option value="da_huy">Đã hủy</option>
+          </select>
+          <button onclick="loadOrders()" class="flex items-center gap-1.5 px-4 py-2 bg-surface hover:bg-surface-container border border-outline-variant rounded-xl text-xs font-semibold transition-colors">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Làm mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low border-b border-outline-variant text-xs text-on-surface-variant uppercase font-bold">
+              <th class="p-4">Mã đơn hàng</th>
+              <th class="p-4">Khách hàng</th>
+              <th class="p-4">Phương thức</th>
+              <th class="p-4">Tổng tiền</th>
+              <th class="p-4">Ngày đặt</th>
+              <th class="p-4">Trạng thái</th>
+              <th class="p-4">Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body" class="divide-y divide-outline-variant/20 text-sm">
+            <tr>
+              <td colspan="7" class="p-8 text-center text-on-surface-variant">Đang tải đơn hàng...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let allOrders = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      if (!user || user.vai_tro !== 'admin') {
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('admin-email').textContent = user.email || 'Admin';
+      document.getElementById('admin-avatar').textContent = (user.email?.[0] || 'A').toUpperCase();
+
+      await loadOrders();
+    });
+
+    async function loadOrders() {
+      const tbody = document.getElementById('orders-table-body');
+      try {
+        const res = await apiFetch('/api/admin/orders');
+        if (res.success && res.data) {
+          allOrders = res.data;
+          renderOrders(allOrders);
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-error font-medium">${err.message || 'Lỗi tải danh sách đơn hàng'}</td></tr>`;
+      }
+    }
+
+    const statusClasses = {
+      thanh_cong: 'bg-secondary-container text-on-secondary-container',
+      completed: 'bg-secondary-container text-on-secondary-container',
+      da_huy: 'bg-error-container text-on-error-container',
+      canceled: 'bg-error-container text-on-error-container',
+      cho_thanh_toan: 'bg-tertiary-fixed text-on-tertiary-fixed',
+      pending: 'bg-tertiary-fixed text-on-tertiary-fixed'
+    };
+
+    const statusLabels = {
+      thanh_cong: 'Thành công',
+      completed: 'Thành công',
+      da_huy: 'Đã hủy',
+      canceled: 'Đã hủy',
+      cho_thanh_toan: 'Chờ thanh toán',
+      pending: 'Chờ thanh toán'
+    };
+
+    function renderOrders(orders) {
+      const tbody = document.getElementById('orders-table-body');
+      if (!orders.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-on-surface-variant">Không tìm thấy đơn hàng nào</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = orders.map(o => {
+        const statusClass = statusClasses[o.trang_thai_thanh_toan] || 'bg-surface-variant text-on-surface-variant';
+        const label = statusLabels[o.trang_thai_thanh_toan] || o.trang_thai_thanh_toan;
+        
+        // Admins can cancel order if not already cancelled
+        const actionBtn = o.trang_thai_thanh_toan !== 'da_huy' && o.trang_thai_thanh_toan !== 'canceled'
+          ? `<button onclick="cancelOrder('${o.ma_dh}')" class="text-xs text-error hover:underline font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-sm">cancel</span>Hủy đơn</button>`
+          : '<span class="text-xs text-outline font-medium">Không thể hủy</span>';
+
+        return `
+          <tr class="hover:bg-surface-container-low/30 transition-colors">
+            <td class="p-4 font-bold text-primary font-mono text-xs">${o.ma_dh}</td>
+            <td class="p-4">
+              <p class="font-semibold">${o.khach_hang?.ho_ten || 'Khách hàng'}</p>
+              <p class="text-xs text-on-surface-variant">${o.khach_hang?.email || 'N/A'}</p>
+            </td>
+            <td class="p-4 font-medium uppercase text-xs">${o.phuong_thuc_thanh_toan || 'Tiền mặt'}</td>
+            <td class="p-4 font-bold text-secondary">${formatCurrency(o.tong_tien)}</td>
+            <td class="p-4 text-xs text-on-surface-variant">${formatDate(o.ngay_tao_don)}</td>
+            <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${label}</span></td>
+            <td class="p-4">${actionBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterOrders() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const status = document.getElementById('filter-status').value;
+
+      const filtered = allOrders.filter(o => {
+        const matchesSearch = o.ma_dh.toLowerCase().includes(search);
+        const matchesStatus = status ? o.trang_thai_thanh_toan === status : true;
+        return matchesSearch && matchesStatus;
+      });
+
+      renderOrders(filtered);
+    }
+
+    async function cancelOrder(maDh) {
+      if (!confirm('Bạn có chắc muốn hủy đơn hàng này và hoàn tiền cho khách hàng?')) return;
+      try {
+        const res = await apiFetch(`/api/orders/${maDh}/cancel`, { method: 'POST' });
+        showToast(res.message || 'Đã hủy đơn hàng và hoàn tiền thành công');
+        await loadOrders();
+      } catch (err) {
+        showToast(err.message || 'Lỗi hủy đơn hàng', 'error');
+      }
+    }
+
+    async function logoutAdmin() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+      } catch (_) {}
+      Auth.clear();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

@@ -88,5 +88,15 @@ export class AdminController {
   getSystemLogs() {
     return this.adminService.getSystemLogs();
   }
+
+  @Get('orders')
+  getAllOrders() {
+    return this.adminService.getAllOrders();
+  }
+
+  @Get('stats')
+  getDashboardStats() {
+    return this.adminService.getDashboardStats();
+  }
 }
 

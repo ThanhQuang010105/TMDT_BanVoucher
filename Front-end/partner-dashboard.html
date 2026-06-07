@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tổng quan - Đối tác | VoucherHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme:{extend:{colors:{
+      "primary":"#004ac6","primary-container":"#2563eb","on-primary":"#ffffff",
+      "on-primary-container":"#eeefff","surface":"#f8f9ff","on-surface":"#0b1c30",
+      "surface-container-lowest":"#ffffff","surface-variant":"#d3e4fe",
+      "on-surface-variant":"#434655","outline":"#737686","outline-variant":"#c3c6d7",
+      "background":"#f8f9ff","error":"#ba1a1a","error-container":"#ffdad6",
+      "on-error-container":"#93000a","secondary":"#006c49","secondary-container":"#6cf8bb",
+      "on-secondary-container":"#00714d","surface-container":"#e5eeff",
+      "surface-container-low":"#eff4ff","surface-container-high":"#dce9ff",
+      "on-background":"#0b1c30","tertiary":"#784b00","tertiary-fixed":"#ffddb8",
+      "on-tertiary-fixed":"#2a1700"
+    }}}
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .animate-up { animation: fadeUp 0.4s ease-out forwards; }
+  .stat-card { animation: fadeUp 0.4s ease-out forwards; }
+  .stat-card:nth-child(2) { animation-delay: 0.05s; }
+  .stat-card:nth-child(3) { animation-delay: 0.1s; }
+  .stat-card:nth-child(4) { animation-delay: 0.15s; }
+</style>
+</head>
+<body class="bg-background text-on-surface">
+
+<!-- Header -->
+<header class="flex justify-between items-center px-6 md:px-8 h-16 sticky top-0 z-50 bg-surface-container-lowest shadow-sm border-b border-outline-variant">
+  <div class="flex items-center gap-6">
+    <div class="flex items-center gap-2 text-primary font-bold text-lg">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+      VoucherHub Partner
+    </div>
+    <nav class="hidden md:flex gap-6">
+      <a class="text-sm text-primary font-semibold border-b-2 border-primary pb-1" href="#">Tổng quan</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary transition-colors" href="partner-vouchers.html">Kho Voucher</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary transition-colors" href="partner-profile.html">Hồ sơ & Chi nhánh</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary transition-colors" href="partner-redemption.html">Xác thực mã</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="partner-vouchers.html" class="hidden sm:flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:brightness-110 transition-all">
+      <span class="material-symbols-outlined text-[18px]">add</span>Tạo Voucher
+    </a>
+    <button onclick="logoutUser()" class="p-2 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-full transition-colors" title="Đăng xuất">
+      <span class="material-symbols-outlined">logout</span>
+    </button>
+    <div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm" id="user-avatar">?</div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 md:px-8 py-8 pb-28 lg:pb-12">
+
+  <!-- Welcome Banner -->
+  <div class="animate-up bg-gradient-to-r from-primary to-primary-container rounded-2xl p-6 md:p-8 text-white mb-8 relative overflow-hidden">
+    <div class="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
+    <div class="absolute right-8 bottom-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2"></div>
+    <div class="relative z-10">
+      <p class="text-white/70 text-sm font-medium mb-1">Chào mừng trở lại 👋</p>
+      <h1 class="text-2xl md:text-3xl font-bold mb-2" id="welcome-name">Đối tác VoucherHub</h1>
+      <p class="text-white/80 text-sm" id="partner-status-msg">Đang tải thông tin tài khoản...</p>
+      <div class="flex flex-wrap gap-3 mt-5">
+        <a href="partner-vouchers.html" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+          <span class="material-symbols-outlined text-[16px]">confirmation_number</span>Quản lý Voucher
+        </a>
+        <a href="partner-profile.html" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+          <span class="material-symbols-outlined text-[16px]">store</span>Chi nhánh
+        </a>
+        <a href="partner-redemption.html" class="flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+          <span class="material-symbols-outlined text-[16px]">qr_code_scanner</span>Xác thực mã
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="stat-card bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-[20px]">sell</span>
+        </div>
+        <span class="text-[11px] font-bold text-secondary px-2 py-0.5 bg-secondary-container rounded-full" id="stat-revenue-change">--</span>
+      </div>
+      <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Tổng doanh thu</p>
+      <p class="text-2xl font-extrabold text-on-surface" id="stat-revenue">--</p>
+    </div>
+    <div class="stat-card bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-secondary text-[20px]">confirmation_number</span>
+        </div>
+        <span class="text-[11px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded-full" id="stat-active-badge">--</span>
+      </div>
+      <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Voucher hoạt động</p>
+      <p class="text-2xl font-extrabold text-on-surface" id="stat-active">--</p>
+    </div>
+    <div class="stat-card bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 bg-tertiary/10 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-tertiary text-[20px]">trending_up</span>
+        </div>
+        <span class="text-[11px] font-bold text-on-surface-variant px-2 py-0.5 bg-surface-variant rounded-full" id="stat-used-badge">--</span>
+      </div>
+      <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Lượt sử dụng</p>
+      <p class="text-2xl font-extrabold text-on-surface" id="stat-used">--</p>
+    </div>
+    <div class="stat-card bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 bg-error/10 rounded-lg flex items-center justify-center">
+          <span class="material-symbols-outlined text-error text-[20px]">timer</span>
+        </div>
+        <span class="text-[11px] font-bold text-error px-2 py-0.5 bg-error-container rounded-full" id="stat-expiring-badge">Sắp hết</span>
+      </div>
+      <p class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">Sắp hết hạn</p>
+      <p class="text-2xl font-extrabold text-on-surface" id="stat-expiring">--</p>
+    </div>
+  </div>
+
+  <!-- Two column section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Voucher List -->
+    <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+      <div class="px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+        <h2 class="font-bold text-on-surface">Voucher gần đây</h2>
+        <a href="partner-vouchers.html" class="text-sm text-primary font-semibold hover:underline flex items-center gap-1">
+          Xem tất cả <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+        </a>
+      </div>
+      <div id="recent-vouchers" class="divide-y divide-outline-variant/20">
+        <div class="py-10 text-center text-on-surface-variant">
+          <div class="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          <p class="text-sm">Đang tải...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions + Status -->
+    <div class="space-y-4">
+
+      <!-- Trạng thái tài khoản -->
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 p-5">
+        <h3 class="font-bold text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+          Trạng thái tài khoản
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-on-surface-variant">Vai trò</span>
+            <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full">Đối tác</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-on-surface-variant">Trạng thái</span>
+            <span id="account-status" class="px-3 py-1 text-xs font-bold rounded-full bg-secondary-container text-on-secondary-container">Hoạt động</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-on-surface-variant">Mã đối tác</span>
+            <span class="text-xs font-mono text-on-surface-variant" id="partner-id">--</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-on-surface-variant">Chi nhánh</span>
+            <span class="text-sm font-bold text-on-surface" id="branch-count">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 p-5">
+        <h3 class="font-bold text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">bolt</span>
+          Thao tác nhanh
+        </h3>
+        <div class="space-y-2">
+          <a href="partner-vouchers.html" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-surface-container transition-colors group">
+            <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <span class="material-symbols-outlined text-primary text-[18px]">add_circle</span>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-on-surface">Tạo Voucher mới</p>
+              <p class="text-xs text-on-surface-variant">Thêm voucher vào cửa hàng</p>
+            </div>
+            <span class="material-symbols-outlined text-outline ml-auto text-[16px]">chevron_right</span>
+          </a>
+          <a href="partner-profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-surface-container transition-colors group">
+            <div class="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
+              <span class="material-symbols-outlined text-secondary text-[18px]">store</span>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-on-surface">Quản lý Chi nhánh</p>
+              <p class="text-xs text-on-surface-variant">Thêm hoặc sửa địa điểm</p>
+            </div>
+            <span class="material-symbols-outlined text-outline ml-auto text-[16px]">chevron_right</span>
+          </a>
+          <a href="partner-redemption.html" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-surface-container transition-colors group">
+            <div class="w-9 h-9 rounded-lg bg-tertiary/10 flex items-center justify-center group-hover:bg-tertiary/20 transition-colors">
+              <span class="material-symbols-outlined text-tertiary text-[18px]">qr_code_scanner</span>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-on-surface">Xác thực tại quầy</p>
+              <p class="text-xs text-on-surface-variant">Quét hoặc nhập mã voucher</p>
+            </div>
+            <span class="material-symbols-outlined text-outline ml-auto text-[16px]">chevron_right</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Mobile Bottom Nav -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-lowest shadow-lg border-t border-outline-variant">
+  <button class="flex flex-col items-center text-primary text-xs font-bold">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">dashboard</span><span>Tổng quan</span>
+  </button>
+  <a href="partner-vouchers.html" class="flex flex-col items-center text-on-surface-variant text-xs">
+    <span class="material-symbols-outlined">confirmation_number</span><span>Voucher</span>
+  </a>
+  <a href="partner-redemption.html" class="flex flex-col items-center text-on-surface-variant text-xs">
+    <span class="material-symbols-outlined">qr_code_2</span><span>Xác thực</span>
+  </a>
+  <a href="partner-profile.html" class="flex flex-col items-center text-on-surface-variant text-xs">
+    <span class="material-symbols-outlined">person</span><span>Hồ sơ</span>
+  </a>
+</nav>
+
+<script src="js/api.js"></script>
+<script>
+  let maDT = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = Auth.getUser();
+    if (!user || user.vai_tro !== 'doi_tac') {
+      window.location.href = 'index.html'; return;
+    }
+    document.getElementById('user-avatar').textContent = (user.email?.[0] || '?').toUpperCase();
+    document.getElementById('welcome-name').textContent = user.email || 'Đối tác VoucherHub';
+    document.getElementById('partner-status-msg').textContent = `Email: ${user.email} · Vai trò: Đối tác`;
+
+    await Promise.all([loadVouchers(), loadStats()]);
+  });
+
+  async function loadVouchers() {
+    try {
+      const res = await apiFetch('/api/vouchers/admin/all');
+      const vouchers = res.data || [];
+
+      // Tính maDT từ voucher đầu
+      if (vouchers.length > 0) {
+        maDT = vouchers[0].ma_dt;
+        document.getElementById('partner-id').textContent = maDT;
+        // Load chi nhánh
+        try {
+          const brRes = await apiFetch(`/api/vouchers/admin/branches/${maDT}`);
+          document.getElementById('branch-count').textContent = (brRes.data?.length || 0) + ' chi nhánh';
+        } catch (_) {}
+      } else {
+        document.getElementById('partner-id').textContent = 'Chưa có voucher';
+      }
+
+      // Stats từ vouchers
+      const active = vouchers.filter(v => v.trang_thai === 'active').length;
+      const totalUsed = vouchers.reduce((s, v) => s + (v.so_luong_da_ban || 0), 0);
+      const totalRev = vouchers.reduce((s, v) => s + (v.gia_ban || 0) * (v.so_luong_da_ban || 0), 0);
+      const now = new Date();
+      const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const expiring = vouchers.filter(v => {
+        const kt = new Date(v.ngay_kt);
+        return kt > now && kt < soon && v.trang_thai === 'active';
+      }).length;
+
+      document.getElementById('stat-revenue').textContent = formatCurrency(totalRev);
+      document.getElementById('stat-revenue-change').textContent = `${vouchers.length} voucher`;
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-active-badge').textContent = `${vouchers.length} tổng`;
+      document.getElementById('stat-used').textContent = totalUsed.toLocaleString('vi-VN');
+      document.getElementById('stat-used-badge').textContent = `${totalUsed} lượt`;
+      document.getElementById('stat-expiring').textContent = String(expiring).padStart(2, '0');
+
+      // Render recent vouchers (top 5)
+      renderRecentVouchers(vouchers.slice(0, 5));
+    } catch (err) {
+      document.getElementById('recent-vouchers').innerHTML = `<div class="py-8 text-center text-error text-sm">${err.message}</div>`;
+    }
+  }
+
+  async function loadStats() {
+    // Stats bổ sung nếu cần từ API stats
+    try {
+      if (maDT) {
+        const statsRes = await apiFetch(`/api/redemption/stats/partner/${maDT}`);
+        if (statsRes.data?.tong_doanh_thu) {
+          document.getElementById('stat-revenue').textContent = formatCurrency(statsRes.data.tong_doanh_thu);
+        }
+      }
+    } catch (_) { /* Dùng số liệu từ vouchers */ }
+  }
+
+  const statusMap = {
+    active: ['bg-secondary-container text-on-secondary-container', 'Đang bán'],
+    pending_approval: ['bg-tertiary-fixed text-on-tertiary-fixed', 'Chờ duyệt'],
+    draft: ['bg-surface-variant text-on-surface-variant', 'Nháp'],
+    rejected: ['bg-error-container text-on-error-container', 'Từ chối'],
+    inactive: ['bg-surface-variant text-on-surface-variant', 'Tạm dừng'],
+  };
+
+  function renderRecentVouchers(vouchers) {
+    const container = document.getElementById('recent-vouchers');
+    if (!vouchers.length) {
+      container.innerHTML = `
+        <div class="py-12 text-center text-on-surface-variant flex flex-col items-center gap-3">
+          <span class="material-symbols-outlined text-5xl text-outline-variant">inventory_2</span>
+          <p class="text-sm font-medium">Chưa có voucher nào</p>
+          <a href="partner-vouchers.html" class="text-sm text-primary font-semibold hover:underline">Tạo voucher đầu tiên →</a>
+        </div>`;
+      return;
+    }
+    container.innerHTML = vouchers.map(v => {
+      const pct = v.so_luong_phat_hanh ? Math.round(v.so_luong_da_ban / v.so_luong_phat_hanh * 100) : 0;
+      const [cls, label] = statusMap[v.trang_thai] || ['bg-surface-variant text-on-surface-variant', v.trang_thai];
+      return `
+        <div class="flex items-center gap-4 px-6 py-4 hover:bg-surface-container-low/50 transition-colors">
+          <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-primary text-[18px]">confirmation_number</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-on-surface truncate">${v.ten_voucher}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden max-w-[80px]">
+                <div class="h-full bg-primary" style="width:${pct}%"></div>
+              </div>
+              <span class="text-[11px] text-outline">${v.so_luong_da_ban}/${v.so_luong_phat_hanh}</span>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <p class="text-sm font-bold text-on-surface">${formatCurrency(v.gia_ban)}</p>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${cls}">${label}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function logoutUser() {
+    try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch (_) {}
+    Auth.clear();
+    window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>

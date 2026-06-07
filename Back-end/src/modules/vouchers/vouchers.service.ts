@@ -198,6 +198,26 @@ export class VouchersService {
     return { data: data ?? [] };
   }
 
+  // ─── DANH SÁCH PHÂN LOẠI VOUCHER ─────────────────────────────────────────────
+  async getPhanLoai() {
+    const client = this.supabaseService.getClient();
+    const { data, error } = await client
+      .from('phan_loai')
+      .select('ma_pl, ten_loai_voucher, trang_thai, mo_ta')
+      .eq('trang_thai', 'active')
+      .order('ten_loai_voucher');
+
+    if (error) {
+      // Nếu không có cột trang_thai, lấy tất cả
+      const { data: all } = await client
+        .from('phan_loai')
+        .select('ma_pl, ten_loai_voucher, mo_ta');
+      return { data: all ?? [] };
+    }
+
+    return { data: data ?? [] };
+  }
+
   // ─── TÍNH NĂNG MỚI TÍCH HỢP TỪ KIÊN (DÀNH CHO ĐỐI TÁC / QUẢN TRỊ) ─────────────
 
   // Tạo voucher nháp (DRAFT)
@@ -212,11 +232,29 @@ export class VouchersService {
       throw new BadRequestException('Ngày kết thúc phải lớn hơn thời điểm hiện tại');
     }
 
+    const client = this.supabaseService.getClient();
+    let partnerId = dto.MaDT;
+
+    if (userId) {
+      const { data: doiTac } = await client
+        .from('doi_tac')
+        .select('ma_dt')
+        .eq('ma_tk', userId)
+        .single();
+      if (doiTac) {
+        partnerId = doiTac.ma_dt;
+      }
+    }
+
+    if (!partnerId) {
+      throw new BadRequestException('Không xác định được đối tác tạo voucher. Vui lòng kiểm tra lại tài khoản.');
+    }
+
     const maVoucher = `VC-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     const voucherData = {
       ma_voucher: maVoucher,
-      ma_dt: dto.MaDT,
+      ma_dt: partnerId,
       ma_pl: dto.MaPL,
       ma_taxon: dto.MaTaxon,
       ten_voucher: dto.TenVoucher,
@@ -254,11 +292,36 @@ export class VouchersService {
   }
 
   // Lấy toàn bộ voucher (kể cả nháp, chờ duyệt...)
-  async getAllVouchers() {
-    const { data, error } = await this.supabaseService
-      .getClient()
-      .from('voucher')
-      .select('*');
+  async getAllVouchers(userId?: string) {
+    const client = this.supabaseService.getClient();
+    let query = client.from('voucher').select('*');
+
+    if (userId) {
+      const { data: taiKhoan } = await client
+        .from('tai_khoan')
+        .select('vai_tro')
+        .eq('ma_tk', userId)
+        .single();
+
+      if (taiKhoan?.vai_tro === 'doi_tac') {
+        const { data: doiTac } = await client
+          .from('doi_tac')
+          .select('ma_dt')
+          .eq('ma_tk', userId)
+          .single();
+
+        if (doiTac) {
+          query = query.eq('ma_dt', doiTac.ma_dt);
+        } else {
+          return {
+            success: true,
+            data: [],
+          };
+        }
+      }
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new BadRequestException(error.message);
@@ -266,7 +329,32 @@ export class VouchersService {
 
     return {
       success: true,
-      data,
+      data: data ?? [],
+    };
+  }
+
+  async getPartnerProfile(userId: string) {
+    const client = this.supabaseService.getClient();
+    const { data: partner, error } = await client
+      .from('doi_tac')
+      .select('*, tai_khoan(trang_thai_hoat_dong)')
+      .eq('ma_tk', userId)
+      .single();
+
+    if (error || !partner) {
+      throw new NotFoundException('Không tìm thấy thông tin đối tác');
+    }
+
+    return {
+      success: true,
+      data: {
+        ma_dt: partner.ma_dt,
+        ten_doanh_nghiep: partner.ten_doanh_nghiep,
+        nguoi_dai_dien: partner.nguoi_dai_dien,
+        ma_so_thue: partner.ma_so_thue,
+        trang_thai_duyet: partner.trang_thai_duyet,
+        trang_thai_hoat_dong: (partner as any).tai_khoan?.trang_thai_hoat_dong,
+      },
     };
   }
 
@@ -415,8 +503,35 @@ export class VouchersService {
   }
 
   // Tìm kiếm voucher nâng cao cho Admin / Đối tác
-  async searchVoucherForAdmin(query: any) {
-    let request = this.supabaseService.getClient().from('voucher').select('*');
+  async searchVoucherForAdmin(query: any, userId?: string) {
+    const client = this.supabaseService.getClient();
+    let request = client.from('voucher').select('*');
+
+    if (userId) {
+      const { data: taiKhoan } = await client
+        .from('tai_khoan')
+        .select('vai_tro')
+        .eq('ma_tk', userId)
+        .single();
+
+      if (taiKhoan?.vai_tro === 'doi_tac') {
+        const { data: doiTac } = await client
+          .from('doi_tac')
+          .select('ma_dt')
+          .eq('ma_tk', userId)
+          .single();
+
+        if (doiTac) {
+          request = request.eq('ma_dt', doiTac.ma_dt);
+        } else {
+          return {
+            success: true,
+            total: 0,
+            data: [],
+          };
+        }
+      }
+    }
 
     if (query.TenVoucher) {
       request = request.ilike('ten_voucher', `%${query.TenVoucher}%`);
@@ -444,7 +559,7 @@ export class VouchersService {
 
     if (query.TiLeGiamMin) {
       results = results.filter(
-          (v) => ((v.gia_goc - v.gia_ban) / v.gia_goc) * 100 >= query.TiLeGiamMin,
+        (v) => ((v.gia_goc - v.gia_ban) / v.gia_goc) * 100 >= query.TiLeGiamMin,
       );
     }
 

@@ -205,6 +205,18 @@
     if (user) {
       document.getElementById('user-name').textContent = user.email?.split('@')[0] || 'Tài khoản';
       document.getElementById('user-icon').textContent = (user.email?.[0] || 'P').toUpperCase();
+      
+      // Nếu là admin, thêm link quản trị vào header
+      if (user.vai_tro === 'admin') {
+        const nav = document.querySelector('header nav');
+        if (nav) {
+          const adminLink = document.createElement('a');
+          adminLink.className = 'text-error hover:text-error/80 text-sm font-bold flex items-center gap-1 ml-2';
+          adminLink.href = 'admin-dashboard.html';
+          adminLink.innerHTML = '<span class="material-symbols-outlined text-[18px]">admin_panel_settings</span>Quản trị';
+          nav.appendChild(adminLink);
+        }
+      }
     }
 
     // Lấy keyword từ URL nếu có

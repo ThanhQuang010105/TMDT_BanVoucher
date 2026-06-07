@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Nhật ký Hệ thống - VoucherHub Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#d3e4fe",
+            "on-tertiary": "#ffffff",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#eff4ff",
+            "on-primary-container": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "surface-container": "#e5eeff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#0b1c30",
+            "surface": "#f8f9ff",
+            "background": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "secondary-container": "#6cf8bb",
+            "on-secondary-container": "#00714d",
+            "primary": "#004ac6",
+            "secondary": "#006c49",
+            "tertiary": "#784b00",
+            "error": "#ba1a1a",
+            "on-background": "#0b1c30"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col p-4 z-50">
+    <div class="px-4 py-6 flex items-center gap-2 text-primary font-bold text-xl">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+      <span class="tracking-tight">VoucherHub Admin</span>
+    </div>
+    
+    <nav class="flex-grow space-y-2 mt-4">
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-users.html">
+        <span class="material-symbols-outlined">group</span>
+        <span>Quản lý Người dùng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-vouchers.html">
+        <span class="material-symbols-outlined">confirmation_number</span>
+        <span>Kiểm duyệt Voucher</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-orders.html">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>Quản lý Đơn hàng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-bold transition-all duration-200" href="admin-logs.html">
+        <span class="material-symbols-outlined">history_edu</span>
+        <span>Nhật ký Hệ thống</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-disputes.html">
+        <span class="material-symbols-outlined">gavel</span>
+        <span>Xử lý Khiếu nại</span>
+      </a>
+    </nav>
+
+    <div class="border-t border-outline-variant pt-4">
+      <button onclick="logoutAdmin()" class="flex items-center gap-3 w-full px-4 py-3 text-error hover:bg-error-container/20 rounded-xl transition-all duration-200">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-bold">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-grow pl-64 min-h-screen flex flex-col">
+    <!-- Topbar -->
+    <header class="h-16 border-b border-outline-variant bg-surface-container-lowest flex items-center justify-between px-8 sticky top-0 z-40">
+      <div>
+        <h2 class="text-lg font-bold text-on-surface">Nhật ký Hệ thống</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-semibold text-on-surface-variant" id="admin-email">admin@voucherhub.com</span>
+        <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm" id="admin-avatar">A</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="p-8 flex-grow space-y-6 max-w-6xl">
+      <!-- Search & Filters -->
+      <div class="flex justify-between items-center bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm gap-4">
+        <div class="relative flex-grow max-w-md">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[20px]">search</span>
+          <input type="text" id="search-input" oninput="filterLogs()" placeholder="Tìm kiếm hành động..." class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary">
+        </div>
+        <button onclick="loadLogs()" class="flex items-center gap-1.5 px-4 py-2 bg-surface hover:bg-surface-container border border-outline-variant rounded-xl text-xs font-semibold transition-colors">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Làm mới
+        </button>
+      </div>
+
+      <!-- Logs Table -->
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low border-b border-outline-variant text-xs text-on-surface-variant uppercase font-bold">
+              <th class="p-4">Mã nhật ký</th>
+              <th class="p-4">Tài khoản thực hiện</th>
+              <th class="p-4">Vai trò</th>
+              <th class="p-4">Hành động</th>
+              <th class="p-4">Thời gian</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table-body" class="divide-y divide-outline-variant/20 text-sm">
+            <tr>
+              <td colspan="5" class="p-8 text-center text-on-surface-variant">Đang tải nhật ký...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let allLogs = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      if (!user || user.vai_tro !== 'admin') {
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('admin-email').textContent = user.email || 'Admin';
+      document.getElementById('admin-avatar').textContent = (user.email?.[0] || 'A').toUpperCase();
+
+      await loadLogs();
+    });
+
+    async function loadLogs() {
+      const tbody = document.getElementById('logs-table-body');
+      try {
+        const res = await apiFetch('/api/admin/logs');
+        if (res.success && res.data) {
+          allLogs = res.data;
+          renderLogs(allLogs);
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-error font-medium">${err.message || 'Lỗi tải nhật ký hệ thống'}</td></tr>`;
+      }
+    }
+
+    const roleBadges = {
+      admin: 'bg-primary/10 text-primary font-bold px-2.5 py-0.5 rounded-full text-xs',
+      doi_tac: 'bg-tertiary/10 text-tertiary font-bold px-2.5 py-0.5 rounded-full text-xs',
+      khach_hang: 'bg-secondary/10 text-secondary font-bold px-2.5 py-0.5 rounded-full text-xs'
+    };
+
+    const roleLabels = {
+      admin: 'Quản trị viên',
+      doi_tac: 'Đối tác',
+      khach_hang: 'Khách hàng'
+    };
+
+    function renderLogs(logs) {
+      const tbody = document.getElementById('logs-table-body');
+      if (!logs.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-on-surface-variant">Không tìm thấy nhật ký nào</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.map(l => {
+        const role = l.tai_khoan?.vai_tro || 'khach_hang';
+        const roleLabel = roleLabels[role] || role;
+        const roleBadge = roleBadges[role] || 'bg-surface-variant text-on-surface-variant';
+        
+        return `
+          <tr class="hover:bg-surface-container-low/30 transition-colors">
+            <td class="p-4 font-mono text-xs text-outline">${l.ma_nk}</td>
+            <td class="p-4 font-semibold text-on-surface">${l.tai_khoan?.username || 'N/A'}</td>
+            <td class="p-4"><span class="${roleBadge}">${roleLabel}</span></td>
+            <td class="p-4 text-on-surface-variant">${l.hanh_dong}</td>
+            <td class="p-4 text-xs text-on-surface-variant font-medium">${new Date(l.thoi_gian).toLocaleString('vi-VN')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterLogs() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const filtered = allLogs.filter(l => l.hanh_dong.toLowerCase().includes(search));
+      renderLogs(filtered);
+    }
+
+    async function logoutAdmin() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+      } catch (_) {}
+      Auth.clear();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

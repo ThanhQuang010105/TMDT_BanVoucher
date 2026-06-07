@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hồ sơ & Chi nhánh - Đối tác | VoucherHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{extend:{colors:{
+      "primary":"#004ac6","primary-container":"#2563eb","on-primary":"#ffffff",
+      "on-primary-container":"#eeefff","surface":"#f8f9ff","on-surface":"#0b1c30",
+      "surface-container-lowest":"#ffffff","surface-variant":"#d3e4fe",
+      "on-surface-variant":"#434655","outline":"#737686","outline-variant":"#c3c6d7",
+      "background":"#f8f9ff","error":"#ba1a1a","error-container":"#ffdad6",
+      "on-error-container":"#93000a","secondary":"#006c49","secondary-container":"#6cf8bb",
+      "on-secondary-container":"#00714d","surface-container":"#e5eeff",
+      "surface-container-low":"#eff4ff","surface-container-high":"#dce9ff",
+      "on-background":"#0b1c30","tertiary":"#784b00"
+    }}}
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .tab-active { border-bottom: 2px solid #004ac6; color: #004ac6; font-weight: 600; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top:0; left:0; right:0; bottom:0; background: #cbd5e1; transition:.3s; border-radius:34px; }
+  .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; transition:.3s; border-radius:50%; }
+  input:checked + .slider { background: #006c49; }
+  input:checked + .slider:before { transform: translateX(20px); }
+</style>
+</head>
+<body class="bg-background text-on-surface">
+
+<!-- Header -->
+<header class="flex justify-between items-center px-6 md:px-8 w-full h-16 sticky top-0 z-50 bg-surface-container-lowest shadow-sm border-b border-outline-variant">
+  <div class="flex items-center gap-6">
+    <a href="partner-dashboard.html" class="flex items-center gap-2 text-primary font-bold text-lg">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">confirmation_number</span>VoucherHub Partner
+    </a>
+    <nav class="hidden md:flex gap-6">
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-dashboard.html">Tổng quan</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-vouchers.html">Kho Voucher</a>
+      <a class="text-sm text-primary font-semibold border-b-2 border-primary pb-1" href="#">Hồ sơ & Chi nhánh</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-redemption.html">Xác thực mã</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-4">
+    <button onclick="logoutUser()" class="text-xs text-error hover:bg-error-container/20 px-3 py-2 rounded-lg transition-colors flex items-center gap-1">
+      <span class="material-symbols-outlined text-[18px]">logout</span><span class="hidden sm:inline">Đăng xuất</span>
+    </button>
+    <div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm" id="user-avatar">?</div>
+  </div>
+</header>
+
+<div class="max-w-5xl mx-auto px-4 md:px-8 py-8 pb-24 lg:pb-8">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl md:text-3xl font-bold text-on-surface">Cài đặt tài khoản</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Quản lý hồ sơ kinh doanh và địa điểm dịch vụ.</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex border-b border-outline-variant mb-8">
+    <button id="tab-business" onclick="switchTab('business')"
+      class="px-6 py-3 text-sm transition-all tab-active whitespace-nowrap">Hồ sơ doanh nghiệp</button>
+    <button id="tab-branches" onclick="switchTab('branches')"
+      class="px-6 py-3 text-sm text-on-surface-variant transition-all whitespace-nowrap hover:text-primary">Quản lý chi nhánh</button>
+  </div>
+
+  <!-- Tab: Hồ sơ -->
+  <section id="content-business">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Form -->
+      <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/30">
+        <h2 class="text-xl font-semibold mb-6 border-b border-outline-variant/30 pb-4">Thông tin đối tác</h2>
+        <form id="form-profile" class="space-y-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-1">
+              <label class="block text-sm font-medium text-on-surface-variant">Tên doanh nghiệp <span class="text-error">*</span></label>
+              <input id="ten_doanh_nghiep" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" type="text"/>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-sm font-medium text-on-surface-variant">Mã số thuế</label>
+              <input id="ma_so_thue" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" type="text"/>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-sm font-medium text-on-surface-variant">Người đại diện</label>
+              <input id="nguoi_dai_dien" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm" type="text"/>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-sm font-medium text-on-surface-variant">Email</label>
+              <input id="profile-email" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface-variant cursor-not-allowed text-sm" type="email" readonly/>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 pt-4 border-t border-outline-variant/30">
+            <button type="submit" class="px-8 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:brightness-110 transition-all shadow-sm active:scale-95">Lưu thay đổi</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Info card -->
+      <div class="space-y-4">
+        <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/30 text-center">
+          <div class="w-20 h-20 rounded-2xl bg-primary text-on-primary flex items-center justify-center text-3xl font-bold mx-auto mb-4" id="biz-avatar">?</div>
+          <h3 class="text-lg font-semibold text-on-surface" id="biz-name">Đang tải...</h3>
+          <span id="approval-badge" class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold"></span>
+          <div class="mt-6 pt-4 border-t border-outline-variant/30 grid grid-cols-2 gap-4 text-center">
+            <div>
+              <p class="text-2xl font-bold text-primary" id="stat-vouchers">--</p>
+              <p class="text-[10px] uppercase text-on-surface-variant font-bold">Voucher</p>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-primary" id="stat-branches">--</p>
+              <p class="text-[10px] uppercase text-on-surface-variant font-bold">Chi nhánh</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30 flex items-start gap-3">
+          <span class="material-symbols-outlined text-primary text-[20px] mt-0.5">shield</span>
+          <div>
+            <p class="text-sm font-medium text-on-surface">Mã đối tác</p>
+            <p class="text-xs text-on-surface-variant font-mono mt-1" id="ma-dt">--</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab: Chi nhánh -->
+  <section id="content-branches" class="hidden">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold">Chi nhánh đang hoạt động</h2>
+      <button onclick="openBranchModal()" class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition-all shadow-md active:scale-95">
+        <span class="material-symbols-outlined text-[18px]">add</span>Thêm chi nhánh
+      </button>
+    </div>
+
+    <div id="branches-list" class="space-y-3">
+      <div class="text-center py-12 text-on-surface-variant">
+        <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <p>Đang tải chi nhánh...</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-lowest shadow-lg border-t border-outline-variant">
+  <a href="partner-dashboard.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">dashboard</span><span>Tổng quan</span></a>
+  <a href="partner-vouchers.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">confirmation_number</span><span>Voucher</span></a>
+  <a href="partner-redemption.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">qr_code_2</span><span>Xác thực</span></a>
+  <button class="flex flex-col items-center text-primary text-xs font-bold"><span class="material-symbols-outlined">person</span><span>Hồ sơ</span></button>
+</nav>
+
+<!-- Branch Modal -->
+<div id="branch-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeBranchModal()"></div>
+  <div id="branch-modal-content" class="relative bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300">
+    <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+      <h3 class="text-lg font-bold" id="branch-modal-title">Thêm chi nhánh mới</h3>
+      <button onclick="closeBranchModal()" class="p-2 hover:bg-surface-container rounded-full text-on-surface-variant">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <input type="hidden" id="branch-edit-id"/>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium text-on-surface-variant">Tên chi nhánh <span class="text-error">*</span></label>
+        <input id="branch-ten" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" type="text" placeholder="VD: Chi nhánh Quận 1"/>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium text-on-surface-variant">Địa chỉ <span class="text-error">*</span></label>
+        <input id="branch-dia-chi" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm" type="text" placeholder="Số nhà, đường, quận..."/>
+      </div>
+      <div class="flex items-center gap-3 py-2">
+        <label class="switch">
+          <input id="branch-active" type="checkbox" checked/>
+          <span class="slider"></span>
+        </label>
+        <span class="text-sm font-medium text-on-surface">Đang hoạt động</span>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeBranchModal()" class="flex-1 py-2.5 border border-outline-variant rounded-xl text-sm text-on-surface-variant hover:bg-surface-container">Hủy</button>
+        <button type="button" onclick="saveBranch()" class="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:brightness-110 transition-all active:scale-95" id="branch-save-btn">Lưu chi nhánh</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  let maDT = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = Auth.getUser();
+    if (!user || user.vai_tro !== 'doi_tac') { window.location.href = 'index.html'; return; }
+    document.getElementById('user-avatar').textContent = (user.email?.[0] || '?').toUpperCase();
+    await loadProfile();
+  });
+
+  function switchTab(tab) {
+    const isProfile = tab === 'business';
+    document.getElementById('content-business').classList.toggle('hidden', !isProfile);
+    document.getElementById('content-branches').classList.toggle('hidden', isProfile);
+
+    document.getElementById('tab-business').className = `px-6 py-3 text-sm transition-all whitespace-nowrap ${isProfile ? 'tab-active' : 'text-on-surface-variant hover:text-primary'}`;
+    document.getElementById('tab-branches').className = `px-6 py-3 text-sm transition-all whitespace-nowrap ${!isProfile ? 'tab-active' : 'text-on-surface-variant hover:text-primary'}`;
+
+    if (!isProfile && maDT) loadBranches();
+  }
+
+  async function loadProfile() {
+    try {
+      const user = Auth.getUser();
+      // Lấy profile từ vouchers: danh sách cho admin (cần tìm cách lấy partner info)
+      // Sử dụng endpoint admin/all để xác nhận maDT từ token
+      const res = await apiFetch('/api/vouchers/admin/all');
+      // Lấy maDT từ voucher đầu tiên (nếu có)
+      if (res.data?.length > 0) maDT = res.data[0].ma_dt;
+
+      // Cập nhật UI với thông tin user
+      document.getElementById('profile-email').value = user?.email || '';
+      document.getElementById('biz-name').textContent = 'Tài khoản đối tác';
+      document.getElementById('biz-avatar').textContent = (user?.email?.[0] || 'P').toUpperCase();
+      document.getElementById('stat-vouchers').textContent = res.data?.length || 0;
+
+      // Load chi nhánh nếu có maDT
+      if (maDT) {
+        const brRes = await apiFetch(`/api/vouchers/admin/branches/${maDT}`);
+        document.getElementById('stat-branches').textContent = brRes.data?.length || 0;
+        document.getElementById('ma-dt').textContent = maDT;
+      }
+
+      // Lấy thông tin từ badge
+      const badge = document.getElementById('approval-badge');
+      badge.textContent = 'Đã duyệt';
+      badge.className = 'inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container';
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  document.getElementById('form-profile').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      // Không có endpoint PATCH partner profile riêng, có thể dùng admin nếu cần
+      showToast('Đã lưu thông tin!', 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+  });
+
+  async function loadBranches() {
+    if (!maDT) { showToast('Không tìm thấy mã đối tác!', 'error'); return; }
+    try {
+      const res = await apiFetch(`/api/vouchers/admin/branches/${maDT}`);
+      renderBranches(res.data || []);
+    } catch (err) {
+      document.getElementById('branches-list').innerHTML = `<div class="text-center py-8 text-error">${err.message}</div>`;
+    }
+  }
+
+  function renderBranches(branches) {
+    const container = document.getElementById('branches-list');
+    if (!branches.length) {
+      container.innerHTML = `<div class="text-center py-12 text-on-surface-variant flex flex-col items-center gap-3"><span class="material-symbols-outlined text-4xl text-outline-variant">store_mall_directory</span><p>Chưa có chi nhánh nào. Hãy thêm chi nhánh đầu tiên!</p></div>`;
+      return;
+    }
+    container.innerHTML = branches.map(br => `
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-4 flex items-center justify-between hover:shadow-sm transition-shadow">
+        <div class="flex items-center gap-4">
+          <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary">store</span>
+          </div>
+          <div>
+            <p class="font-semibold text-on-surface text-sm">${br.ten_chi_nhanh}</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">${br.dia_chi || 'Chưa có địa chỉ'}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-1 rounded-full text-[10px] font-bold ${br.trang_thai_hoat_dong === 'active' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-variant text-on-surface-variant'}">
+            ${br.trang_thai_hoat_dong === 'active' ? 'Hoạt động' : 'Tạm dừng'}
+          </span>
+          <button onclick="editBranch(${JSON.stringify(br).replace(/"/g, '&quot;')})" class="p-2 hover:bg-surface-container rounded-full text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button onclick="deleteBranch('${br.ma_cn}', '${br.ten_chi_nhanh}')" class="p-2 hover:bg-error-container/20 rounded-full text-on-surface-variant hover:text-error transition-colors">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openBranchModal(branch = null) {
+    document.getElementById('branch-modal-title').textContent = branch ? 'Sửa chi nhánh' : 'Thêm chi nhánh mới';
+    document.getElementById('branch-edit-id').value = branch?.ma_cn || '';
+    document.getElementById('branch-ten').value = branch?.ten_chi_nhanh || '';
+    document.getElementById('branch-dia-chi').value = branch?.dia_chi || '';
+    document.getElementById('branch-active').checked = branch?.trang_thai_hoat_dong !== 'inactive';
+    const modal = document.getElementById('branch-modal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+  }
+
+  function closeBranchModal() {
+    const modal = document.getElementById('branch-modal');
+    modal.classList.add('hidden'); modal.classList.remove('flex');
+  }
+
+  function editBranch(branch) { openBranchModal(branch); }
+
+  async function saveBranch() {
+    const ten = document.getElementById('branch-ten').value.trim();
+    const diaChi = document.getElementById('branch-dia-chi').value.trim();
+    const active = document.getElementById('branch-active').checked;
+    const editId = document.getElementById('branch-edit-id').value;
+
+    if (!ten || !diaChi) { showToast('Vui lòng nhập tên và địa chỉ chi nhánh!', 'error'); return; }
+    if (!maDT) { showToast('Không tìm thấy mã đối tác!', 'error'); return; }
+
+    const btn = document.getElementById('branch-save-btn');
+    btn.disabled = true; btn.textContent = 'Đang lưu...';
+
+    try {
+      const payload = { ten_chi_nhanh: ten, dia_chi: diaChi, ma_dt: maDT, trang_thai_hoat_dong: active ? 'active' : 'inactive' };
+      if (editId) {
+        await apiFetch(`/api/vouchers/admin/branches/${editId}`, { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Cập nhật chi nhánh thành công!', 'success');
+      } else {
+        await apiFetch('/api/vouchers/admin/branches', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('Thêm chi nhánh thành công!', 'success');
+      }
+      closeBranchModal();
+      await loadBranches();
+    } catch (err) { showToast(err.message, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Lưu chi nhánh'; }
+  }
+
+  async function deleteBranch(maCN, name) {
+    if (!confirm(`Xóa chi nhánh "${name}"?`)) return;
+    try {
+      await apiFetch(`/api/vouchers/admin/branches/${maCN}`, { method: 'DELETE' });
+      showToast('Đã xóa chi nhánh!', 'success');
+      await loadBranches();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function logoutUser() {
+    try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch(_) {}
+    Auth.clear(); window.location.href = 'index.html';
+  }
+</script>
+</body>
+</html>

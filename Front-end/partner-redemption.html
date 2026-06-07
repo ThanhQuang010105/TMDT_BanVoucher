@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Xác thực Voucher tại quầy | VoucherHub Partner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme:{extend:{colors:{
+      "primary":"#004ac6","primary-container":"#2563eb","on-primary":"#ffffff",
+      "on-primary-container":"#eeefff","surface":"#f8f9ff","on-surface":"#0b1c30",
+      "surface-container-lowest":"#ffffff","surface-variant":"#d3e4fe",
+      "on-surface-variant":"#434655","outline":"#737686","outline-variant":"#c3c6d7",
+      "background":"#f8f9ff","error":"#ba1a1a","error-container":"#ffdad6",
+      "on-error-container":"#93000a","secondary":"#006c49","secondary-container":"#6cf8bb",
+      "on-secondary-container":"#00714d","surface-container":"#e5eeff",
+      "surface-container-low":"#eff4ff","surface-container-high":"#dce9ff","on-background":"#0b1c30"
+    }}}
+  }
+</script>
+<style>
+  body{font-family:'Inter',sans-serif;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .scan-line{width:100%;height:2px;background:#2563eb;position:absolute;top:0;left:0;animation:scan 2.5s infinite ease-in-out;box-shadow:0 0 12px 2px rgba(37,99,235,0.6);}
+  @keyframes scan{0%,100%{top:5%}50%{top:95%}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .animate-up{animation:fadeUp 0.4s ease-out forwards}
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+
+<header class="flex justify-between items-center px-6 md:px-8 h-16 sticky top-0 z-50 bg-surface-container-lowest shadow-sm border-b border-outline-variant">
+  <div class="flex items-center gap-6">
+    <a href="partner-dashboard.html" class="flex items-center gap-2 text-primary font-bold text-lg">
+      <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">confirmation_number</span>VoucherHub Partner
+    </a>
+    <nav class="hidden md:flex gap-6">
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-dashboard.html">Tổng quan</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-vouchers.html">Kho Voucher</a>
+      <a class="text-sm text-on-surface-variant hover:text-primary" href="partner-profile.html">Hồ sơ & Chi nhánh</a>
+      <a class="text-sm text-primary font-semibold border-b-2 border-primary pb-1" href="#">Xác thực mã</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm" id="user-avatar">?</div>
+  </div>
+</header>
+
+<main class="max-w-lg mx-auto px-4 py-8 pb-28 md:pb-12 flex flex-col gap-6">
+  <!-- Title -->
+  <div class="text-center">
+    <h1 class="text-2xl font-bold">Xác thực Voucher</h1>
+    <p class="text-sm text-on-surface-variant mt-1">Nhập mã voucher và mã bảo mật để xác nhận sử dụng</p>
+  </div>
+
+  <!-- QR Simulator (UI) -->
+  <div class="relative bg-black rounded-2xl overflow-hidden aspect-square max-w-[300px] mx-auto shadow-xl border-4 border-surface-container-high">
+    <div class="scan-line"></div>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="material-symbols-outlined text-6xl text-white/30">qr_code_scanner</span>
+    </div>
+    <!-- Corners -->
+    <div class="absolute top-5 left-5 w-10 h-10 border-t-4 border-l-4 border-primary rounded-tl-lg"></div>
+    <div class="absolute top-5 right-5 w-10 h-10 border-t-4 border-r-4 border-primary rounded-tr-lg"></div>
+    <div class="absolute bottom-5 left-5 w-10 h-10 border-b-4 border-l-4 border-primary rounded-bl-lg"></div>
+    <div class="absolute bottom-5 right-5 w-10 h-10 border-b-4 border-r-4 border-primary rounded-br-lg"></div>
+  </div>
+  <p class="text-center text-xs text-on-surface-variant uppercase tracking-widest">Camera đang hoạt động (giả lập)</p>
+
+  <!-- Chọn chi nhánh -->
+  <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 space-y-4">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium text-on-surface-variant">Chi nhánh đang thực hiện <span class="text-error">*</span></label>
+      <select id="branch-select" class="w-full px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm">
+        <option value="">-- Chọn chi nhánh --</option>
+      </select>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium text-on-surface-variant">Mã Voucher Code <span class="text-error">*</span></label>
+      <div class="flex gap-3">
+        <input id="voucher-code-input" class="flex-1 px-4 py-2.5 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm font-mono" type="text" placeholder="VC-XXXXXXXXXXXX"/>
+        <button onclick="verifyCode()" class="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 active:scale-95 transition-all whitespace-nowrap">
+          Kiểm tra
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lịch sử xác thực -->
+  <div>
+    <h3 class="text-base font-bold mb-3">Lịch sử xác thực gần đây</h3>
+    <div id="history-list" class="space-y-3">
+      <div class="text-center py-6 text-on-surface-variant text-sm">
+        <span class="material-symbols-outlined text-3xl block mb-1 text-outline-variant">history</span>
+        Chưa có giao dịch nào hôm nay.
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Mobile Bottom Nav -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 bg-surface-container-lowest shadow-lg border-t border-outline-variant">
+  <a href="partner-dashboard.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">dashboard</span><span>Tổng quan</span></a>
+  <a href="partner-vouchers.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">confirmation_number</span><span>Voucher</span></a>
+  <button class="flex flex-col items-center text-primary text-xs font-bold"><span class="material-symbols-outlined">qr_code_2</span><span>Xác thực</span></button>
+  <a href="partner-profile.html" class="flex flex-col items-center text-on-surface-variant text-xs"><span class="material-symbols-outlined">person</span><span>Hồ sơ</span></a>
+</nav>
+
+<!-- Verify Success Modal -->
+<div id="success-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModals()"></div>
+  <div class="relative bg-surface-container-lowest rounded-3xl p-8 text-center shadow-2xl w-full max-w-sm animate-up">
+    <div class="w-20 h-20 bg-secondary-container rounded-full flex items-center justify-center mx-auto mb-6">
+      <span class="material-symbols-outlined text-4xl text-on-secondary-container" style="font-variation-settings:'FILL' 1;">check_circle</span>
+    </div>
+    <h3 class="text-2xl font-bold text-on-surface mb-1">Voucher Hợp Lệ!</h3>
+    <p class="text-sm text-on-surface-variant mb-6">Voucher đã được xác minh thành công</p>
+    <div class="bg-surface-container-low rounded-xl p-4 text-left mb-6 space-y-3">
+      <div>
+        <p class="text-xs font-bold text-outline uppercase tracking-wider">Tên Voucher</p>
+        <p class="text-base font-bold text-primary mt-1" id="success-voucher-name">--</p>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs font-bold text-outline uppercase tracking-wider">Mã code</p>
+          <p class="text-sm font-mono text-on-surface mt-1" id="success-code">--</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-outline uppercase tracking-wider">Hết hạn</p>
+          <p class="text-sm text-on-surface mt-1" id="success-expiry">--</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col gap-3">
+      <button onclick="confirmRedeem()" class="w-full py-3.5 bg-primary text-white rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all text-sm">
+        <span class="material-symbols-outlined text-[16px] align-middle mr-1">done_all</span>Xác nhận đổi voucher
+      </button>
+      <button onclick="closeModals()" class="w-full py-2.5 text-on-surface-variant text-sm hover:text-on-surface transition-colors">Hủy bỏ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div id="error-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModals()"></div>
+  <div class="relative bg-surface-container-lowest rounded-3xl p-8 text-center shadow-2xl w-full max-w-sm animate-up">
+    <div class="w-20 h-20 bg-error-container rounded-full flex items-center justify-center mx-auto mb-6">
+      <span class="material-symbols-outlined text-4xl text-on-error-container" style="font-variation-settings:'FILL' 1;">error</span>
+    </div>
+    <h3 class="text-2xl font-bold text-on-surface mb-2">Xác thực thất bại</h3>
+    <p class="text-sm text-on-surface-variant mb-8" id="error-msg">Voucher không hợp lệ hoặc đã được sử dụng.</p>
+    <button onclick="closeModals()" class="w-full py-3.5 bg-on-surface text-surface-container-lowest rounded-xl font-bold text-sm hover:brightness-110 transition-all">Thử lại</button>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  let pendingCode = null;
+  let recentHistory = [];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = Auth.getUser();
+    if (!user || user.vai_tro !== 'doi_tac') { window.location.href = 'index.html'; return; }
+    document.getElementById('user-avatar').textContent = (user.email?.[0] || '?').toUpperCase();
+    await loadBranches();
+  });
+
+  async function loadBranches() {
+    try {
+      // Lấy danh sách voucher để tìm maDT của đối tác này
+      const vRes = await apiFetch('/api/vouchers/admin/all');
+      const maDT = vRes.data?.[0]?.ma_dt;
+      if (!maDT) return;
+
+      const brRes = await apiFetch(`/api/vouchers/admin/branches/${maDT}`);
+      const sel = document.getElementById('branch-select');
+      (brRes.data || []).filter(b => b.trang_thai_hoat_dong === 'active').forEach(b => {
+        sel.innerHTML += `<option value="${b.ma_cn}">${b.ten_chi_nhanh}</option>`;
+      });
+    } catch (err) { console.error(err); }
+  }
+
+  async function verifyCode() {
+    const code = document.getElementById('voucher-code-input').value.trim();
+    const maCN = document.getElementById('branch-select').value;
+
+    if (!code) { showToast('Vui lòng nhập mã voucher!', 'error'); return; }
+    if (!maCN) { showToast('Vui lòng chọn chi nhánh!', 'error'); return; }
+
+    try {
+      const res = await apiFetch('/api/redemption/verify', {
+        method: 'POST',
+        body: JSON.stringify({ ma_voucher_code: code, ma_cn: maCN })
+      });
+
+      pendingCode = { code, maCN };
+      const voucherData = res.data;
+      document.getElementById('success-voucher-name').textContent = voucherData?.ten_voucher || code;
+      document.getElementById('success-code').textContent = code;
+      document.getElementById('success-expiry').textContent = formatDate(voucherData?.ngay_kt);
+      showModal('success-modal');
+    } catch (err) {
+      document.getElementById('error-msg').textContent = err.message;
+      showModal('error-modal');
+    }
+  }
+
+  async function confirmRedeem() {
+    if (!pendingCode) return;
+    try {
+      const res = await apiFetch('/api/redemption/redeem', {
+        method: 'POST',
+        body: JSON.stringify({ ma_voucher_code: pendingCode.code, ma_cn: pendingCode.maCN })
+      });
+
+      closeModals();
+      showToast('Voucher đã được đổi thành công!', 'success');
+      document.getElementById('voucher-code-input').value = '';
+      addToHistory({ code: pendingCode.code, message: res.message || 'Xác thực thành công', time: new Date() });
+      pendingCode = null;
+    } catch (err) {
+      closeModals();
+      showToast(err.message, 'error');
+    }
+  }
+
+  function addToHistory(item) {
+    recentHistory.unshift(item);
+    if (recentHistory.length > 10) recentHistory.pop();
+    const container = document.getElementById('history-list');
+    container.innerHTML = recentHistory.map(h => `
+      <div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings:'FILL' 1;">check_circle</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-on-surface font-mono">${h.code}</p>
+          <p class="text-xs text-on-surface-variant">${h.message}</p>
+        </div>
+        <p class="text-xs text-outline whitespace-nowrap">${new Date(h.time).toLocaleTimeString('vi-VN')}</p>
+      </div>
+    `).join('');
+  }
+
+  function showModal(id) {
+    const m = document.getElementById(id);
+    m.classList.remove('hidden'); m.classList.add('flex');
+  }
+
+  function closeModals() {
+    ['success-modal','error-modal'].forEach(id => {
+      const m = document.getElementById(id);
+      m.classList.add('hidden'); m.classList.remove('flex');
+    });
+  }
+
+  // Enter key support
+  document.getElementById('voucher-code-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyCode();
+  });
+</script>
+</body>
+</html>

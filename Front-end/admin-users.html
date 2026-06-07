@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Quản lý Người dùng - VoucherHub</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#d3e4fe",
+            "on-tertiary": "#ffffff",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#eff4ff",
+            "on-primary-container": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "surface-container": "#e5eeff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#0b1c30",
+            "surface": "#f8f9ff",
+            "background": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "secondary-container": "#6cf8bb",
+            "on-secondary-container": "#00714d",
+            "primary": "#004ac6",
+            "secondary": "#006c49",
+            "tertiary": "#784b00",
+            "error": "#ba1a1a",
+            "on-background": "#0b1c30"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col p-4 z-50">
+    <div class="px-4 py-6 flex items-center gap-2 text-primary font-bold text-xl">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+      <span class="tracking-tight">VoucherHub Admin</span>
+    </div>
+    
+    <nav class="flex-grow space-y-2 mt-4">
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-bold transition-all duration-200" href="admin-users.html">
+        <span class="material-symbols-outlined">group</span>
+        <span>Quản lý Người dùng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-vouchers.html">
+        <span class="material-symbols-outlined">confirmation_number</span>
+        <span>Kiểm duyệt Voucher</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-orders.html">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>Quản lý Đơn hàng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-logs.html">
+        <span class="material-symbols-outlined">history_edu</span>
+        <span>Nhật ký Hệ thống</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-disputes.html">
+        <span class="material-symbols-outlined">gavel</span>
+        <span>Xử lý Khiếu nại</span>
+      </a>
+    </nav>
+
+    <div class="border-t border-outline-variant pt-4">
+      <button onclick="logoutAdmin()" class="flex items-center gap-3 w-full px-4 py-3 text-error hover:bg-error-container/20 rounded-xl transition-all duration-200">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-bold">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-grow pl-64 min-h-screen flex flex-col">
+    <!-- Topbar -->
+    <header class="h-16 border-b border-outline-variant bg-surface-container-lowest flex items-center justify-between px-8 sticky top-0 z-40">
+      <div>
+        <h2 class="text-lg font-bold text-on-surface">Quản lý Người dùng & Đối tác</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-semibold text-on-surface-variant" id="admin-email">admin@voucherhub.com</span>
+        <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm" id="admin-avatar">A</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="p-8 flex-grow space-y-6 max-w-6xl">
+      <!-- Tabs -->
+      <div class="flex justify-between items-center border-b border-outline-variant">
+        <div class="flex">
+          <button id="tab-users-btn" onclick="switchTab('users')" class="px-6 py-3 border-b-2 border-primary text-primary font-bold text-sm">
+            Tất cả Tài khoản
+          </button>
+          <button id="tab-partners-btn" onclick="switchTab('partners')" class="px-6 py-3 text-on-surface-variant hover:text-primary font-semibold text-sm">
+            Duyệt Đối tác đăng ký
+          </button>
+        </div>
+        <button onclick="refreshData()" class="flex items-center gap-1.5 px-4 py-2 bg-surface hover:bg-surface-container border border-outline-variant rounded-xl text-xs font-semibold transition-colors">
+          <span class="material-symbols-outlined text-sm">refresh</span>
+          Làm mới
+        </button>
+      </div>
+
+      <!-- Tab Content: Users -->
+      <div id="tab-users-content" class="space-y-4">
+        <!-- Actions & Search -->
+        <div class="flex justify-between items-center bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm gap-4">
+          <div class="relative flex-grow max-w-md">
+            <span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[20px]">search</span>
+            <input type="text" id="search-users-input" oninput="filterUsers()" placeholder="Tìm kiếm theo email..." class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-xl text-sm focus:outline-none focus:border-primary">
+          </div>
+          <div class="flex gap-2">
+            <select id="filter-role" onchange="filterUsers()" class="bg-surface border border-outline-variant rounded-xl text-sm py-2 px-4 focus:outline-none focus:border-primary">
+              <option value="">Tất cả vai trò</option>
+              <option value="khach_hang">Khách hàng</option>
+              <option value="doi_tac">Đối tác</option>
+              <option value="admin">Quản trị viên</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-surface-container-low border-b border-outline-variant text-xs text-on-surface-variant uppercase font-bold">
+                <th class="p-4">Email</th>
+                <th class="p-4">ID tài khoản</th>
+                <th class="p-4">Vai trò</th>
+                <th class="p-4">Trạng thái</th>
+                <th class="p-4">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body" class="divide-y divide-outline-variant/20 text-sm">
+              <tr>
+                <td colspan="5" class="p-8 text-center text-on-surface-variant">Đang tải dữ liệu...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Partners -->
+      <div id="tab-partners-content" class="hidden space-y-4">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-surface-container-low border-b border-outline-variant text-xs text-on-surface-variant uppercase font-bold">
+                <th class="p-4">Mã đối tác</th>
+                <th class="p-4">Tên doanh nghiệp</th>
+                <th class="p-4">Người đại diện</th>
+                <th class="p-4">Mã số thuế</th>
+                <th class="p-4">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="partners-table-body" class="divide-y divide-outline-variant/20 text-sm">
+              <tr>
+                <td colspan="5" class="p-8 text-center text-on-surface-variant">Đang tải danh sách chờ duyệt...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let allUsers = [];
+    let activeTab = 'users';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      if (!user || user.vai_tro !== 'admin') {
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('admin-email').textContent = user.email || 'Admin';
+      document.getElementById('admin-avatar').textContent = (user.email?.[0] || 'A').toUpperCase();
+
+      await loadUsers();
+      await loadPendingPartners();
+    });
+
+    async function loadUsers() {
+      const tbody = document.getElementById('users-table-body');
+      try {
+        const res = await apiFetch('/api/admin/users');
+        if (res.success && res.data) {
+          allUsers = res.data.map(u => {
+            const role = u.db_role || u.user_metadata?.role || u.app_metadata?.role || 'khach_hang';
+            const isBanned = u.db_status === 'banned' || (u.banned_until && new Date(u.banned_until) > new Date());
+            return {
+              id: u.id,
+              email: u.email,
+              role: role,
+              isBanned: isBanned,
+              confirmed: !!u.email_confirmed_at
+            };
+          });
+          renderUsers(allUsers);
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-error font-medium">${err.message || 'Lỗi tải người dùng'}</td></tr>`;
+      }
+    }
+
+    async function refreshData() {
+      showToast('Đang làm mới dữ liệu...');
+      await loadUsers();
+      await loadPendingPartners();
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('users-table-body');
+      if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-on-surface-variant">Không có tài khoản nào trùng khớp</td></tr>`;
+        return;
+      }
+      
+      const roleBadges = {
+        admin: 'bg-primary/10 text-primary font-bold px-2.5 py-0.5 rounded-full text-xs',
+        doi_tac: 'bg-tertiary/10 text-tertiary font-bold px-2.5 py-0.5 rounded-full text-xs',
+        khach_hang: 'bg-secondary/10 text-secondary font-bold px-2.5 py-0.5 rounded-full text-xs'
+      };
+
+      const roleLabels = {
+        admin: 'Quản trị viên',
+        doi_tac: 'Đối tác',
+        khach_hang: 'Khách hàng'
+      };
+
+      tbody.innerHTML = users.map(u => {
+        const badgeClass = roleBadges[u.role] || 'bg-surface-variant text-on-surface-variant font-bold px-2.5 py-0.5 rounded-full text-xs';
+        const label = roleLabels[u.role] || u.role;
+        const statusBadge = u.isBanned 
+          ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">Đã khóa</span>' 
+          : '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">Hoạt động</span>';
+
+        const actionBtn = u.role === 'admin' 
+          ? '<span class="text-xs text-outline font-medium">Hệ thống</span>'
+          : u.isBanned 
+            ? `<button onclick="toggleBan('${u.id}', false)" class="text-xs text-secondary hover:underline font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-sm">lock_open</span>Kích hoạt</button>`
+            : `<button onclick="toggleBan('${u.id}', true)" class="text-xs text-error hover:underline font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-sm">lock</span>Khóa</button>`;
+
+        return `
+          <tr class="hover:bg-surface-container-low/30 transition-colors">
+            <td class="p-4 font-semibold">${u.email}</td>
+            <td class="p-4 font-mono text-xs text-on-surface-variant">${u.id}</td>
+            <td class="p-4"><span class="${badgeClass}">${label}</span></td>
+            <td class="p-4">${statusBadge}</td>
+            <td class="p-4">${actionBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterUsers() {
+      const search = document.getElementById('search-users-input').value.toLowerCase();
+      const role = document.getElementById('filter-role').value;
+
+      const filtered = allUsers.filter(u => {
+        const matchesSearch = u.email.toLowerCase().includes(search);
+        const matchesRole = role ? u.role === role : true;
+        return matchesSearch && matchesRole;
+      });
+
+      renderUsers(filtered);
+    }
+
+    async function toggleBan(userId, shouldBan) {
+      if (!confirm(`Bạn có chắc chắn muốn ${shouldBan ? 'Khóa' : 'Mở khóa'} tài khoản này?`)) return;
+      try {
+        const path = `/api/admin/users/${userId}/${shouldBan ? 'ban' : 'unban'}`;
+        const res = await apiFetch(path, { method: 'PATCH' });
+        if (res.success) {
+          showToast(res.message || 'Cập nhật trạng thái thành công');
+          await loadUsers();
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi thao tác', 'error');
+      }
+    }
+
+    async function loadPendingPartners() {
+      const tbody = document.getElementById('partners-table-body');
+      try {
+        const res = await apiFetch('/api/admin/partners/pending');
+        if (res.success && res.data) {
+          renderPendingPartners(res.data);
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-error font-medium">${err.message || 'Lỗi tải đối tác chờ duyệt'}</td></tr>`;
+      }
+    }
+
+    function renderPendingPartners(partners) {
+      const tbody = document.getElementById('partners-table-body');
+      if (!partners.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-on-surface-variant">Không có đối tác nào đang chờ duyệt</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = partners.map(p => `
+        <tr class="hover:bg-surface-container-low/30 transition-colors">
+          <td class="p-4 font-bold text-primary">${p.ma_dt}</td>
+          <td class="p-4 font-semibold">${p.ten_doanh_nghiep}</td>
+          <td class="p-4">${p.nguoi_dai_dien || 'N/A'}</td>
+          <td class="p-4 font-mono text-xs">${p.ma_so_thue || 'N/A'}</td>
+          <td class="p-4 flex gap-3">
+            <button onclick="approvePartner('${p.ma_dt}', true)" class="bg-secondary text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:brightness-110 flex items-center gap-1"><span class="material-symbols-outlined text-sm">check</span>Duyệt</button>
+            <button onclick="approvePartner('${p.ma_dt}', false)" class="bg-error text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:brightness-110 flex items-center gap-1"><span class="material-symbols-outlined text-sm">close</span>Từ chối</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function approvePartner(maDT, isApprove) {
+      if (!confirm(`Bạn có chắc chắn muốn ${isApprove ? 'Phê duyệt' : 'Từ chối'} đối tác này?`)) return;
+      try {
+        const action = isApprove ? 'approve' : 'reject';
+        const res = await apiFetch(`/api/admin/partners/${maDT}/${action}`, { method: 'PATCH' });
+        if (res.success) {
+          showToast(res.message || 'Cập nhật trạng thái đối tác thành công');
+          await loadPendingPartners();
+          await loadUsers(); // Refresh users too since approval activates account
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi thao tác', 'error');
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const usersBtn = document.getElementById('tab-users-btn');
+      const partnersBtn = document.getElementById('tab-partners-btn');
+      const usersContent = document.getElementById('tab-users-content');
+      const partnersContent = document.getElementById('tab-partners-content');
+
+      if (tab === 'users') {
+        usersBtn.className = 'px-6 py-3 border-b-2 border-primary text-primary font-bold text-sm';
+        partnersBtn.className = 'px-6 py-3 text-on-surface-variant hover:text-primary font-semibold text-sm';
+        usersContent.classList.remove('hidden');
+        partnersContent.classList.add('hidden');
+      } else {
+        partnersBtn.className = 'px-6 py-3 border-b-2 border-primary text-primary font-bold text-sm';
+        usersBtn.className = 'px-6 py-3 text-on-surface-variant hover:text-primary font-semibold text-sm';
+        partnersContent.classList.remove('hidden');
+        usersContent.classList.add('hidden');
+      }
+    }
+
+    async function logoutAdmin() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+      } catch (_) {}
+      Auth.clear();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

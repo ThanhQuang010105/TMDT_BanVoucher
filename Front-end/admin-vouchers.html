@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Kiểm duyệt Voucher | VoucherHub Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-variant": "#d3e4fe",
+            "on-tertiary": "#ffffff",
+            "outline": "#737686",
+            "outline-variant": "#c3c6d7",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#eff4ff",
+            "on-primary-container": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "primary-container": "#2563eb",
+            "on-primary": "#ffffff",
+            "surface-container": "#e5eeff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#0b1c30",
+            "surface": "#f8f9ff",
+            "background": "#f8f9ff",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "secondary-container": "#6cf8bb",
+            "on-secondary-container": "#00714d",
+            "primary": "#004ac6",
+            "secondary": "#006c49",
+            "tertiary": "#784b00",
+            "error": "#ba1a1a",
+            "on-background": "#0b1c30"
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col p-4 z-50">
+    <div class="px-4 py-6 flex items-center gap-2 text-primary font-bold text-xl">
+      <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">confirmation_number</span>
+      <span class="tracking-tight">VoucherHub Admin</span>
+    </div>
+    
+    <nav class="flex-grow space-y-2 mt-4">
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-dashboard.html">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-users.html">
+        <span class="material-symbols-outlined">group</span>
+        <span>Quản lý Người dùng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 bg-primary text-white rounded-xl font-bold transition-all duration-200" href="admin-vouchers.html">
+        <span class="material-symbols-outlined">confirmation_number</span>
+        <span>Kiểm duyệt Voucher</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-orders.html">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>Quản lý Đơn hàng</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-logs.html">
+        <span class="material-symbols-outlined">history_edu</span>
+        <span>Nhật ký Hệ thống</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all duration-200" href="admin-disputes.html">
+        <span class="material-symbols-outlined">gavel</span>
+        <span>Xử lý Khiếu nại</span>
+      </a>
+    </nav>
+
+    <div class="border-t border-outline-variant pt-4">
+      <button onclick="logoutAdmin()" class="flex items-center gap-3 w-full px-4 py-3 text-error hover:bg-error-container/20 rounded-xl transition-all duration-200">
+        <span class="material-symbols-outlined">logout</span>
+        <span class="font-bold">Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="flex-grow pl-64 min-h-screen flex flex-col">
+    <!-- Topbar -->
+    <header class="h-16 border-b border-outline-variant bg-surface-container-lowest flex items-center justify-between px-8 sticky top-0 z-40">
+      <div>
+        <h2 class="text-lg font-bold text-on-surface">Kiểm duyệt Voucher</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-semibold text-on-surface-variant" id="admin-email">admin@voucherhub.com</span>
+        <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm" id="admin-avatar">A</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="p-8 flex-grow space-y-6 max-w-6xl">
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 shadow-sm">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold">Danh sách Voucher chờ phê duyệt</h3>
+          <button onclick="loadPendingVouchers()" class="flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-surface-container border border-outline-variant rounded-xl text-xs font-semibold transition-colors">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            Làm mới
+          </button>
+        </div>
+        
+        <!-- Table -->
+        <div class="overflow-hidden rounded-xl border border-outline-variant/20">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-surface-container-low border-b border-outline-variant text-xs text-on-surface-variant uppercase font-bold">
+                <th class="p-4">Hình ảnh</th>
+                <th class="p-4">Tên Voucher</th>
+                <th class="p-4">Đối tác</th>
+                <th class="p-4">Giá bán / Giá gốc</th>
+                <th class="p-4">Thời gian</th>
+                <th class="p-4">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="vouchers-table-body" class="divide-y divide-outline-variant/20 text-sm">
+              <tr>
+                <td colspan="6" class="p-8 text-center text-on-surface-variant">Đang tải danh sách...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Details Modal -->
+  <div id="details-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-surface-container-lowest rounded-2xl max-w-lg w-full overflow-hidden shadow-xl border border-outline-variant/30 flex flex-col max-h-[90vh]">
+      <div class="p-6 border-b border-outline-variant flex justify-between items-center">
+        <h3 class="font-bold text-lg text-on-surface">Chi tiết Voucher</h3>
+        <button onclick="closeModal()" class="p-1.5 rounded-full hover:bg-surface-variant transition-colors">
+          <span class="material-symbols-outlined text-on-surface-variant">close</span>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-4 text-sm" id="modal-content">
+        <!-- Dyn content -->
+      </div>
+      <div class="p-6 border-t border-outline-variant flex justify-end gap-3 bg-surface-container-low/30">
+        <button onclick="rejectCurrentVoucher()" class="bg-error text-white px-4 py-2 rounded-xl text-sm font-semibold hover:brightness-110 flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">close</span>Từ chối
+        </button>
+        <button onclick="approveCurrentVoucher()" class="bg-secondary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:brightness-110 flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">check</span>Phê duyệt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let pendingVouchers = [];
+    let selectedVoucher = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = Auth.getUser();
+      if (!user || user.vai_tro !== 'admin') {
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('admin-email').textContent = user.email || 'Admin';
+      document.getElementById('admin-avatar').textContent = (user.email?.[0] || 'A').toUpperCase();
+
+      await loadPendingVouchers();
+    });
+
+    async function loadPendingVouchers() {
+      const tbody = document.getElementById('vouchers-table-body');
+      try {
+        const res = await apiFetch('/api/admin/vouchers/pending');
+        if (res.success && res.data) {
+          pendingVouchers = res.data;
+          renderVouchers(pendingVouchers);
+        }
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-error font-medium">${err.message || 'Lỗi tải voucher chờ duyệt'}</td></tr>`;
+      }
+    }
+
+    function renderVouchers(vouchers) {
+      const tbody = document.getElementById('vouchers-table-body');
+      if (!vouchers.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-on-surface-variant">Không có voucher nào cần duyệt</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = vouchers.map(v => {
+        const bannerUrl = v.link_voucher_banner || 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=100';
+        return `
+          <tr class="hover:bg-surface-container-low/30 transition-colors">
+            <td class="p-4">
+              <img src="${bannerUrl}" alt="${v.ten_voucher}" class="w-14 h-10 object-cover rounded-lg border border-outline-variant/30">
+            </td>
+            <td class="p-4 font-semibold text-on-surface max-w-[200px] truncate">${v.ten_voucher}</td>
+            <td class="p-4 font-semibold text-primary">${v.doi_tac?.ten_doanh_nghiep || 'Đối tác'}</td>
+            <td class="p-4">
+              <p class="font-bold text-secondary">${formatCurrency(v.gia_ban)}</p>
+              <p class="text-xs text-outline line-through">${formatCurrency(v.gia_goc)}</p>
+            </td>
+            <td class="p-4 text-xs text-on-surface-variant">
+              <p>Bắt đầu: ${formatDate(v.ngay_bd)}</p>
+              <p>Kết thúc: ${formatDate(v.ngay_kt)}</p>
+            </td>
+            <td class="p-4">
+              <button onclick="showDetails('${v.ma_voucher}')" class="text-primary hover:underline font-bold text-xs flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">visibility</span> Chi tiết / Duyệt
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function showDetails(maVoucher) {
+      selectedVoucher = pendingVouchers.find(v => v.ma_voucher === maVoucher);
+      if (!selectedVoucher) return;
+
+      const bannerUrl = selectedVoucher.link_voucher_banner || 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=500';
+      const container = document.getElementById('modal-content');
+      container.innerHTML = `
+        <div class="space-y-4">
+          <img src="${bannerUrl}" alt="${selectedVoucher.ten_voucher}" class="w-full h-44 object-cover rounded-xl border border-outline-variant/30 mb-2">
+          <div>
+            <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Tên Voucher</h4>
+            <p class="text-base font-bold text-on-surface">${selectedVoucher.ten_voucher}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Mã Voucher</h4>
+              <p class="font-mono text-sm">${selectedVoucher.ma_voucher}</p>
+            </div>
+            <div>
+              <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Đối tác</h4>
+              <p class="font-semibold text-primary">${selectedVoucher.doi_tac?.ten_doanh_nghiep || 'N/A'}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Giá bán</h4>
+              <p class="font-bold text-secondary text-base">${formatCurrency(selectedVoucher.gia_ban)}</p>
+            </div>
+            <div>
+              <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Giá gốc</h4>
+              <p class="text-outline line-through">${formatCurrency(selectedVoucher.gia_goc)}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Số lượng phát hành</h4>
+              <p class="font-semibold">${selectedVoucher.so_luong_phat_hanh} chiếc</p>
+            </div>
+            <div>
+              <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Thời hạn hiệu lực</h4>
+              <p class="text-xs text-on-surface-variant">${formatDate(selectedVoucher.ngay_bd)} - ${formatDate(selectedVoucher.ngay_kt)}</p>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Mô tả chi tiết</h4>
+            <p class="text-on-surface-variant leading-relaxed bg-surface p-3 rounded-xl border border-outline-variant/30 mt-1">${selectedVoucher.mo_ta || 'Không có mô tả.'}</p>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('details-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('details-modal').classList.add('hidden');
+      selectedVoucher = null;
+    }
+
+    async function approveCurrentVoucher() {
+      if (!selectedVoucher) return;
+      try {
+        const res = await apiFetch(`/api/admin/vouchers/${selectedVoucher.ma_voucher}/approve`, { method: 'PATCH' });
+        if (res.success) {
+          showToast(res.message || 'Phê duyệt voucher thành công');
+          closeModal();
+          await loadPendingVouchers();
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi duyệt voucher', 'error');
+      }
+    }
+
+    async function rejectCurrentVoucher() {
+      if (!selectedVoucher) return;
+      if (!confirm('Bạn có chắc muốn từ chối voucher này?')) return;
+      try {
+        const res = await apiFetch(`/api/admin/vouchers/${selectedVoucher.ma_voucher}/reject`, { method: 'PATCH' });
+        if (res.success) {
+          showToast(res.message || 'Đã từ chối voucher');
+          closeModal();
+          await loadPendingVouchers();
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi thao tác', 'error');
+      }
+    }
+
+    async function logoutAdmin() {
+      try {
+        await apiFetch('/api/auth/logout', { method: 'POST' });
+      } catch (_) {}
+      Auth.clear();
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
