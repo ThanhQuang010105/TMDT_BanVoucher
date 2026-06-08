@@ -249,6 +249,32 @@
     document.getElementById('welcome-name').textContent = user.email || 'Đối tác VoucherHub';
     document.getElementById('partner-status-msg').textContent = `Email: ${user.email} · Vai trò: Đối tác`;
 
+    try {
+      const profileRes = await apiFetch('/api/vouchers/partner/profile');
+      const partner = profileRes.data;
+      if (partner && partner.ten_doanh_nghiep) {
+        document.getElementById('welcome-name').textContent = partner.ten_doanh_nghiep;
+        document.getElementById('user-avatar').textContent = partner.ten_doanh_nghiep[0].toUpperCase();
+        document.getElementById('partner-status-msg').textContent = `Doanh nghiệp: ${partner.ten_doanh_nghiep} · Email: ${user.email}`;
+        
+        const statusEl = document.getElementById('account-status');
+        if (statusEl) {
+          if (partner.trang_thai_duyet === 'active') {
+            statusEl.textContent = 'Hoạt động';
+            statusEl.className = 'px-3 py-1 text-xs font-bold rounded-full bg-secondary-container text-on-secondary-container';
+          } else if (partner.trang_thai_duyet === 'pending') {
+            statusEl.textContent = 'Chờ duyệt';
+            statusEl.className = 'px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800';
+          } else {
+            statusEl.textContent = 'Bị từ chối';
+            statusEl.className = 'px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-800';
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load partner profile:', err);
+    }
+
     await Promise.all([loadVouchers(), loadStats()]);
   });
 
@@ -314,6 +340,7 @@
     draft: ['bg-surface-variant text-on-surface-variant', 'Nháp'],
     rejected: ['bg-error-container text-on-error-container', 'Từ chối'],
     inactive: ['bg-surface-variant text-on-surface-variant', 'Tạm dừng'],
+    expired: ['bg-error-container text-on-error-container', 'Hết hạn'],
   };
 
   function renderRecentVouchers(vouchers) {
@@ -327,13 +354,14 @@
         </div>`;
       return;
     }
-    container.innerHTML = vouchers.map(v => {
+    container.innerHTML = vouchers.map((v, idx) => {
       const pct = v.so_luong_phat_hanh ? Math.round(v.so_luong_da_ban / v.so_luong_phat_hanh * 100) : 0;
       const [cls, label] = statusMap[v.trang_thai] || ['bg-surface-variant text-on-surface-variant', v.trang_thai];
+      const imgUrl = getVoucherImage(v, idx);
       return `
         <div class="flex items-center gap-4 px-6 py-4 hover:bg-surface-container-low/50 transition-colors">
-          <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined text-primary text-[18px]">confirmation_number</span>
+          <div class="w-10 h-10 rounded-xl overflow-hidden bg-surface-container flex-shrink-0 border border-outline-variant/30">
+            <img src="${imgUrl}" alt="${v.ten_voucher}" class="w-full h-full object-cover" onerror="handleVoucherImageError(this, '${v.ten_voucher}')" />
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-on-surface truncate">${v.ten_voucher}</p>

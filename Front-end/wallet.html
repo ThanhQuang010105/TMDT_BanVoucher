@@ -92,10 +92,16 @@
         Đã hủy/Hết hạn
       </button>
     </div>
-    <button onclick="loadVouchers()" class="flex items-center gap-1.5 px-4 py-2 bg-surface hover:bg-surface-container border border-outline rounded-full text-xs font-semibold transition-colors mr-2 mb-2">
-      <span class="material-symbols-outlined text-sm">refresh</span>
-      Làm mới
-    </button>
+    <div class="flex items-center gap-2 mr-2 mb-2">
+      <select id="sort-select" onchange="applySortAndRender()" class="bg-surface hover:bg-surface-container border border-outline rounded-full text-xs font-semibold px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary">
+        <option value="newest">Mới nhất (Mặc định)</option>
+        <option value="expiry">Hạn dùng gần nhất</option>
+      </select>
+      <button onclick="loadVouchers()" class="flex items-center gap-1.5 px-4 py-2 bg-surface hover:bg-surface-container border border-outline rounded-full text-xs font-semibold transition-colors">
+        <span class="material-symbols-outlined text-sm">refresh</span>
+        Làm mới
+      </button>
+    </div>
   </div>
 
   <!-- Content -->
@@ -207,11 +213,17 @@
   let currentRating = 0;
   let reviewVoucherId = '';
   let complaintVoucherId = '';
+  let allVouchers = [];
 
   document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
     const user = Auth.getUser();
     if (user) document.getElementById('user-avatar').textContent = (user.email?.[0] || '?').toUpperCase();
+    
+    // Đảm bảo hiển thị bộ lọc ban đầu
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) sortSelect.classList.remove('hidden');
+    
     await loadVouchers();
   });
 
@@ -222,6 +234,17 @@
     });
     const activeBtn = document.getElementById('tab-' + status);
     if (activeBtn) activeBtn.className = 'tab-btn px-6 py-4 text-sm font-semibold text-primary border-b-2 border-primary whitespace-nowrap';
+    
+    // Chỉ hiển thị bộ lọc khi ở tab Chưa sử dụng
+    const sortSelect = document.getElementById('sort-select');
+    if (sortSelect) {
+      if (status === 'chua_su_dung') {
+        sortSelect.classList.remove('hidden');
+      } else {
+        sortSelect.classList.add('hidden');
+      }
+    }
+    
     loadVouchers();
   }
 
@@ -230,11 +253,29 @@
     container.innerHTML = `<div class="text-center py-16 text-on-surface-variant flex flex-col items-center gap-3"><div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>`;
     try {
       const res = await apiFetch(`/api/orders/my-vouchers?trang_thai=${currentTab}`);
-      renderVouchers(res.data || []);
+      allVouchers = res.data || [];
+      applySortAndRender();
     } catch (err) {
       showToast(err.message, 'error');
       container.innerHTML = `<div class="text-center py-16 text-on-surface-variant"><p>Không thể tải ví voucher.</p></div>`;
     }
+  }
+
+  function applySortAndRender() {
+    let items = [...allVouchers];
+    const sortSelect = document.getElementById('sort-select');
+    if (currentTab === 'chua_su_dung' && sortSelect) {
+      const val = sortSelect.value;
+      if (val === 'expiry') {
+        // Sắp xếp hạn dùng gần nhất (ngay_kt tăng dần)
+        items.sort((a, b) => {
+          const dateA = new Date(a.voucher?.ngay_kt || '9999-12-31').getTime();
+          const dateB = new Date(b.voucher?.ngay_kt || '9999-12-31').getTime();
+          return dateA - dateB;
+        });
+      }
+    }
+    renderVouchers(items);
   }
 
   function renderVouchers(items) {

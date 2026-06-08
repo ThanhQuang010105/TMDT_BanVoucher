@@ -257,8 +257,7 @@ export class OrdersService {
         voucher ( ma_voucher, ten_voucher, gia_ban, ngay_kt, link_voucher_banner, doi_tac ( ten_doanh_nghiep ) ),
         don_hang ( ma_dh, ngay_tao_don )
       `)
-      .in('ma_dh', maDhList)
-      .order('ma_voucher_code', { ascending: false });
+      .in('ma_dh', maDhList);
 
     // Lọc theo trạng thái nếu được chỉ định
     if (trang_thai) {
@@ -268,7 +267,21 @@ export class OrdersService {
     const { data, error } = await query;
     if (error) throw new InternalServerErrorException(error.message);
 
-    return { data: data ?? [] };
+    // Sắp xếp in-memory:
+    // 1. Voucher mới mua lên đầu (ngay_tao_don giảm dần)
+    // 2. Hai voucher giống nhau thì đứng cạnh nhau (ma_voucher)
+    const sortedData = (data ?? []).sort((a: any, b: any) => {
+      const dateA = new Date(a.don_hang?.ngay_tao_don || 0).getTime();
+      const dateB = new Date(b.don_hang?.ngay_tao_don || 0).getTime();
+      if (dateB !== dateA) {
+        return dateB - dateA;
+      }
+      const vA = a.voucher?.ma_voucher || '';
+      const vB = b.voucher?.ma_voucher || '';
+      return vA.localeCompare(vB);
+    });
+
+    return { data: sortedData };
   }
 
   // ─── CHI TIẾT 1 VOUCHER CODE ─────────────────────────────────────────────────
@@ -539,5 +552,186 @@ export class OrdersService {
       data,
       message: 'Gửi khiếu nại thành công.',
     };
+  }
+
+  // ─── STRIPE CHECKOUT ─────────────────────────────────────────────────────────
+
+  /** Trả về Stripe Public Key để frontend khởi tạo Stripe.js nếu cần */
+  getStripeConfig() {
+    return {
+      success: true,
+      publishableKey: process.env.STRIPE_PUBLIC_KEY,
+    };
+  }
+
+  /** Tạo Stripe Checkout Session từ giỏ hàng hiện tại của khách hàng */
+  async createStripeCheckoutSession(accessToken: string, emailNhanVoucher?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Stripe = require('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const client = this.supabaseService.getClient();
+    const maKh = await this.getKhachHang(accessToken);
+
+    // Lấy giỏ hàng với thông tin voucher
+    const { data: cartItems, error: cartError } = await client
+      .from('chi_tiet_gio_hang')
+      .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( ten_voucher, gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt, link_voucher_banner )`)
+      .eq('ma_kh', maKh);
+
+    if (cartError) throw new InternalServerErrorException(cartError.message);
+    if (!cartItems || cartItems.length === 0) throw new BadRequestException('Giỏ hàng trống.');
+
+    const now = new Date().toISOString();
+
+    // Validate từng item (giống createOrder)
+    for (const item of cartItems) {
+      const v = item.voucher as any;
+      if (v.trang_thai !== 'active') throw new BadRequestException(`Voucher ${item.ma_voucher} không còn hoạt động.`);
+      if (v.ngay_kt < now) throw new BadRequestException(`Voucher ${item.ma_voucher} đã hết hạn.`);
+      const conLai = v.so_luong_phat_hanh - v.so_luong_da_ban;
+      if (item.so_luong_mua > conLai) throw new BadRequestException(`Voucher ${item.ma_voucher} chỉ còn ${conLai} trong kho.`);
+    }
+
+    // Tạo line_items cho Stripe (quy đổi VNĐ → USD cents, tỉ giá ~25000)
+    const lineItems = cartItems.map((item) => {
+      const v = item.voucher as any;
+      const unitAmountCents = Math.round((v.gia_ban / 25000) * 100);
+      return {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: v.ten_voucher,
+            description: `VoucherHub - Thanh toán voucher`,
+            ...(v.link_voucher_banner ? { images: [v.link_voucher_banner] } : {}),
+          },
+          unit_amount: unitAmountCents,
+        },
+        quantity: item.so_luong_mua,
+      };
+    });
+
+    const backendUrl = `http://localhost:3001`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    // Tạo Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: `${backendUrl}/api/orders/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${backendUrl}/api/orders/stripe/cancel`,
+      metadata: {
+        ma_kh: maKh,
+        email_nhan_voucher: emailNhanVoucher || '',
+      },
+    });
+
+    return { url: session.url as string };
+  }
+
+  /** Xác nhận thanh toán Stripe thành công → tạo đơn hàng thật trong DB */
+  async handleStripeSuccess(accessToken: string, sessionId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Stripe = require('stripe');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    // Lấy thông tin phiên từ Stripe
+    const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (stripeSession.payment_status !== 'paid') {
+      throw new BadRequestException('Giao dịch chưa hoàn tất.');
+    }
+
+    const maKh = stripeSession.metadata?.ma_kh;
+    if (!maKh) throw new BadRequestException('Không tìm thấy thông tin khách hàng từ phiên Stripe.');
+
+    const client = this.supabaseService.getClient();
+
+    // Lấy giỏ hàng của khách hàng
+    const { data: cartItems, error: cartError } = await client
+      .from('chi_tiet_gio_hang')
+      .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt )`)
+      .eq('ma_kh', maKh);
+
+    if (cartError) throw new InternalServerErrorException(cartError.message);
+    if (!cartItems || cartItems.length === 0) throw new BadRequestException('Giỏ hàng trống hoặc đã được xử lý.');
+
+    let tongTien = 0;
+    const validItems: any[] = [];
+
+    for (const item of cartItems) {
+      const v = item.voucher as any;
+      tongTien += v.gia_ban * item.so_luong_mua;
+      validItems.push(item);
+    }
+
+    // Tạo đơn hàng (giống createOrder)
+    const maDh = `DH-${uuidv4().slice(0, 8).toUpperCase()}`;
+    const { error: dhError } = await client.from('don_hang').insert({
+      ma_dh: maDh,
+      ma_kh: maKh,
+      tong_tien: tongTien,
+      phuong_thuc_thanh_toan: 'the_quoc_te',
+      trang_thai_thanh_toan: 'thanh_cong',
+    });
+
+    if (dhError) throw new InternalServerErrorException(dhError.message);
+
+    // Tạo chi tiết đơn hàng + chuẩn bị phát hành voucher (y hệt createOrder)
+    const chiTietList: any[] = [];
+    const voucherCodesInsert: any[] = [];
+
+    for (const item of validItems) {
+      const v = item.voucher as any;
+      const maCtdh = `CTDH-${uuidv4().slice(0, 8).toUpperCase()}`;
+
+      chiTietList.push({
+        ma_ctdh: maCtdh,
+        ma_dh: maDh,
+        ma_voucher: item.ma_voucher,
+        so_luong_mua: item.so_luong_mua,
+        don_gia_mua: v.gia_ban,
+      });
+
+      for (let i = 0; i < item.so_luong_mua; i++) {
+        voucherCodesInsert.push({
+          ma_voucher_code: `VC-${uuidv4().slice(0, 12).toUpperCase()}`,
+          ma_voucher: item.ma_voucher,
+          ma_dh: maDh,
+          trang_thai: 'chua_su_dung',
+          chuoi_ma_bao_mat: uuidv4().replace(/-/g, ''),
+        });
+      }
+
+      // Cập nhật tồn kho qua RPC (giống createOrder)
+      await client.rpc('increment_so_luong_da_ban', {
+        p_ma_voucher: item.ma_voucher,
+        p_so_luong: item.so_luong_mua,
+      });
+    }
+
+    // Insert chi tiết đơn hàng
+    const { error: ctdhError } = await client.from('chi_tiet_don_hang').insert(chiTietList);
+    if (ctdhError) throw new InternalServerErrorException(ctdhError.message);
+
+    // Phát hành voucher code — đúng tên bảng: voucher_phat_hanh
+    const { error: vcError } = await client.from('voucher_phat_hanh').insert(voucherCodesInsert);
+    if (vcError) throw new InternalServerErrorException(vcError.message);
+
+    // Ghi lịch sử giao dịch
+    const maLs = `LS-${uuidv4().slice(0, 8).toUpperCase()}`;
+    await client.from('lich_su_giao_dich').insert({
+      ma_ls: maLs,
+      ma_dh: maDh,
+      so_tien: tongTien,
+      phuong_thuc_thanh_toan: 'the_quoc_te',
+      trang_thai_thanh_toan: 'thanh_cong',
+    });
+
+    // Xóa giỏ hàng (giống createOrder: xóa theo ma_kh)
+    await client.from('chi_tiet_gio_hang').delete().eq('ma_kh', maKh);
+
+    return { ma_dh: maDh, tong_tien: tongTien };
   }
 }

@@ -138,18 +138,19 @@
             </div>
             <span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded text-[10px] font-bold uppercase">Khuyên dùng</span>
           </label>
-          <!-- Thẻ quốc tế -->
-          <label class="flex items-center justify-between p-4 border border-outline-variant rounded-xl cursor-pointer hover:bg-surface-container-low transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+          <!-- Stripe -->
+          <label class="flex items-center justify-between p-4 border border-outline-variant rounded-xl cursor-pointer hover:bg-surface-container-low transition-all has-[:checked]:border-[#635bff] has-[:checked]:bg-[#635bff]/5">
             <div class="flex items-center gap-4">
-              <input class="w-5 h-5 text-primary border-outline-variant focus:ring-primary accent-primary" name="payment_method" type="radio" value="credit_card"/>
-              <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <span class="material-symbols-outlined text-on-surface-variant">credit_card</span>
+              <input class="w-5 h-5 text-primary border-outline-variant focus:ring-primary accent-primary" name="payment_method" type="radio" value="stripe"/>
+              <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background:#635bff">
+                <span class="text-white font-bold text-lg tracking-tight">S</span>
               </div>
               <div>
-                <p class="text-sm font-semibold text-on-surface">Thẻ Quốc tế (Visa, Mastercard, JCB)</p>
-                <p class="text-xs text-on-surface-variant">Hỗ trợ các loại thẻ thanh toán quốc tế</p>
+                <p class="text-sm font-semibold text-on-surface">Thẻ Quốc tế qua Stripe</p>
+                <p class="text-xs text-on-surface-variant">Visa, Mastercard, JCB — Bảo mật bởi Stripe</p>
               </div>
             </div>
+            <span class="bg-[#635bff]/10 text-[#635bff] px-2 py-1 rounded text-[10px] font-bold uppercase">Quốc tế</span>
           </label>
         </div>
       </section>
@@ -280,20 +281,44 @@
     if (!email) { showToast('Vui lòng nhập email nhận voucher', 'error'); return; }
 
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'vnpay';
-    
-    // Map payment method to values accepted by backend: 'chuyen_khoan', 'vi_dien_tu', 'tien_mat'
-    let mappedMethod = 'chuyen_khoan';
-    if (paymentMethod === 'momo') {
-      mappedMethod = 'vi_dien_tu';
-    } else if (paymentMethod === 'vnpay') {
-      mappedMethod = 'chuyen_khoan';
-    } else if (paymentMethod === 'credit_card') {
-      mappedMethod = 'chuyen_khoan';
-    }
 
     const btn = document.getElementById('confirm-pay-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Đang xử lý...';
+
+    // ── STRIPE: chuyển hướng sang Stripe Checkout ──────────────────────────
+    if (paymentMethod === 'stripe') {
+      try {
+        // Gọi backend → backend tạo session Stripe → trả về redirect 303
+        // Dùng form POST để trình duyệt tự theo redirect
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/orders/stripe/create-checkout';
+
+        // Đính kèm Authorization header qua hidden field không được;
+        // thay vào đó dùng fetch rồi redirect thủ công
+        const res = await apiFetch('/api/orders/stripe/create-checkout', {
+          method: 'POST',
+          body: JSON.stringify({ email_nhan_voucher: email }),
+        });
+
+        if (res.url) {
+          // Backend trả về URL Stripe → redirect
+          window.location.href = res.url;
+        } else {
+          throw new Error('Không nhận được URL thanh toán từ Stripe.');
+        }
+      } catch (err) {
+        showToast('Lỗi kết nối Stripe: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">lock</span> Xác nhận &amp; Thanh toán';
+      }
+      return;
+    }
+
+    // ── LUỒNG CŨ: MoMo, VNPay ─────────────────────────────────────────────
+    let mappedMethod = 'chuyen_khoan';
+    if (paymentMethod === 'momo') mappedMethod = 'vi_dien_tu';
 
     try {
       const res = await apiFetch('/api/orders', {
@@ -304,7 +329,6 @@
         })
       });
 
-      // Lưu mã đơn hàng để hiển thị trên trang xác nhận
       sessionStorage.setItem('order_result', JSON.stringify({
         ma_dh: res.data?.ma_dh || res.ma_dh || 'N/A',
         tong_tien: checkoutTotal,
@@ -321,6 +345,14 @@
       btn.innerHTML = '<span class="material-symbols-outlined">lock</span> Xác nhận &amp; Thanh toán';
     }
   }
+
+  // Hiển thị thông báo nếu Stripe bị huỷ
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('stripe_cancelled') === '1') {
+      showToast('Thanh toán Stripe đã bị huỷ. Giỏ hàng của bạn vẫn còn.', 'error');
+    }
+  });
 </script>
 </body>
 </html>

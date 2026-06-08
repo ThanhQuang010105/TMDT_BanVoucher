@@ -207,12 +207,12 @@
         return;
       }
 
-      tbody.innerHTML = vouchers.map(v => {
-        const bannerUrl = v.link_voucher_banner || 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=100';
+      tbody.innerHTML = vouchers.map((v, idx) => {
+        const bannerUrl = getVoucherImage(v, idx);
         return `
           <tr class="hover:bg-surface-container-low/30 transition-colors">
             <td class="p-4">
-              <img src="${bannerUrl}" alt="${v.ten_voucher}" class="w-14 h-10 object-cover rounded-lg border border-outline-variant/30">
+              <img src="${bannerUrl}" alt="${v.ten_voucher}" class="w-14 h-10 object-cover rounded-lg border border-outline-variant/30" onerror="handleVoucherImageError(this, '${v.ten_voucher}')">
             </td>
             <td class="p-4 font-semibold text-on-surface max-w-[200px] truncate">${v.ten_voucher}</td>
             <td class="p-4 font-semibold text-primary">${v.doi_tac?.ten_doanh_nghiep || 'Đối tác'}</td>
@@ -238,11 +238,11 @@
       selectedVoucher = pendingVouchers.find(v => v.ma_voucher === maVoucher);
       if (!selectedVoucher) return;
 
-      const bannerUrl = selectedVoucher.link_voucher_banner || 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=500';
+      const bannerUrl = getVoucherImage(selectedVoucher);
       const container = document.getElementById('modal-content');
       container.innerHTML = `
         <div class="space-y-4">
-          <img src="${bannerUrl}" alt="${selectedVoucher.ten_voucher}" class="w-full h-44 object-cover rounded-xl border border-outline-variant/30 mb-2">
+          <img src="${bannerUrl}" alt="${selectedVoucher.ten_voucher}" class="w-full h-44 object-cover rounded-xl border border-outline-variant/30 mb-2" onerror="handleVoucherImageError(this, '${selectedVoucher.ten_voucher}')">
           <div>
             <h4 class="text-xs text-outline uppercase tracking-wider font-semibold">Tên Voucher</h4>
             <p class="text-base font-bold text-on-surface">${selectedVoucher.ten_voucher}</p>

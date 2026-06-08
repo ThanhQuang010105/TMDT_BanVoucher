@@ -119,4 +119,16 @@ export declare class OrdersController {
         data: any;
         message: string;
     }>;
+    getStripeConfig(): {
+        success: boolean;
+        publishableKey: string | undefined;
+    };
+    createStripeCheckout(token: string, body: {
+        email_nhan_voucher?: string;
+    }): Promise<{
+        success: boolean;
+        url: string;
+    }>;
+    stripeSuccess(token: string, sessionId: string): Promise<string>;
+    stripeCancel(): string;
 }

@@ -160,17 +160,29 @@
       document.getElementById('user-avatar').textContent = (user.email?.[0] || '?').toUpperCase();
     }
 
-    // Đọc kết quả đơn hàng từ session
-    const resultStr = sessionStorage.getItem('order_result');
-    if (resultStr) {
-      const result = JSON.parse(resultStr);
-      document.getElementById('order-id').textContent = '#' + (result.ma_dh || 'N/A');
-      document.getElementById('order-time').textContent = result.thoi_gian || new Date().toLocaleString('vi-VN');
-      document.getElementById('order-total').textContent = formatCurrency(result.tong_tien || 0);
+    const params = new URLSearchParams(window.location.search);
+    const isStripe = params.get('stripe') === '1';
 
-      const methodMap = { vnpay: 'VNPay (QR Code)', momo: 'Ví MoMo', credit_card: 'Thẻ Quốc tế' };
-      document.getElementById('order-method').textContent = methodMap[result.phuong_thuc] || result.phuong_thuc || 'VNPay';
-      sessionStorage.removeItem('order_result');
+    if (isStripe) {
+      // ── Thanh toán qua Stripe: đọc tham số từ URL ──
+      const maDh = params.get('ma_dh') || 'N/A';
+      const total = parseFloat(params.get('total') || '0');
+      document.getElementById('order-id').textContent = '#' + maDh;
+      document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
+      document.getElementById('order-total').textContent = formatCurrency(total);
+      document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+    } else {
+      // ── Thanh toán MoMo / VNPay: đọc từ sessionStorage ──
+      const resultStr = sessionStorage.getItem('order_result');
+      if (resultStr) {
+        const result = JSON.parse(resultStr);
+        document.getElementById('order-id').textContent = '#' + (result.ma_dh || 'N/A');
+        document.getElementById('order-time').textContent = result.thoi_gian || new Date().toLocaleString('vi-VN');
+        document.getElementById('order-total').textContent = formatCurrency(result.tong_tien || 0);
+        const methodMap = { vnpay: 'VNPay (QR Code)', momo: 'Ví MoMo', stripe: 'Thẻ Quốc tế (Stripe)' };
+        document.getElementById('order-method').textContent = methodMap[result.phuong_thuc] || result.phuong_thuc || 'VNPay';
+        sessionStorage.removeItem('order_result');
+      }
     }
 
     // Confetti animation

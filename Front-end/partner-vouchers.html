@@ -259,6 +259,8 @@
     pending_approval: ['bg-tertiary-fixed text-on-tertiary-fixed','Chờ duyệt'],
     draft: ['bg-surface-variant text-on-surface-variant','Nháp'],
     rejected: ['bg-error-container text-on-error-container','Từ chối'],
+    expired: ['bg-error-container text-on-error-container','Hết hạn'],
+    inactive: ['bg-surface-variant text-on-surface-variant','Tạm dừng'],
   };
 
   function renderTable(vouchers) {
@@ -272,13 +274,19 @@
     }
     const filter = document.getElementById('status-filter').value;
     const filtered = filter ? vouchers.filter(v => v.trang_thai === filter) : vouchers;
-    tbody.innerHTML = filtered.map(v => {
+    tbody.innerHTML = filtered.map((v, idx) => {
       const pct = v.so_luong_phat_hanh ? Math.round(v.so_luong_da_ban / v.so_luong_phat_hanh * 100) : 0;
       const [cls, label] = statusMap[v.trang_thai] || ['bg-surface-variant text-on-surface-variant', v.trang_thai];
+      const imgUrl = getVoucherImage(v, idx);
       return `<tr class="hover:bg-surface-container-low/50 transition-colors">
         <td class="px-5 py-4">
-          <p class="text-sm font-semibold text-on-surface line-clamp-1">${v.ten_voucher}</p>
-          <p class="text-[11px] text-outline font-mono">${v.ma_voucher}</p>
+          <div class="flex items-center gap-3">
+            <img src="${imgUrl}" alt="${v.ten_voucher}" class="w-12 h-12 rounded-lg object-cover bg-surface-container border border-outline-variant/30" onerror="handleVoucherImageError(this, '${v.ten_voucher}')" />
+            <div>
+              <p class="text-sm font-semibold text-on-surface line-clamp-1">${v.ten_voucher}</p>
+              <p class="text-[11px] text-outline font-mono">${v.ma_voucher}</p>
+            </div>
+          </div>
         </td>
         <td class="px-5 py-4">
           <p class="text-sm font-semibold text-on-surface">${formatCurrency(v.gia_ban)}</p>

@@ -22,13 +22,11 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   // ── GIỎ HÀNG ──────────────────────────────────────────────────────────────
-  // GET  /api/orders/cart          → Xem giỏ hàng
   @Get('cart')
   getCart(@CurrentToken() token: string) {
     return this.ordersService.getCart(token);
   }
 
-  // POST /api/orders/cart          → Thêm vào giỏ
   @Post('cart')
   addToCart(
     @CurrentToken() token: string,
@@ -37,7 +35,6 @@ export class OrdersController {
     return this.ordersService.addToCart(token, dto);
   }
 
-  // DELETE /api/orders/cart/:maCtgh → Xóa khỏi giỏ
   @Delete('cart/:maCtgh')
   removeFromCart(
     @CurrentToken() token: string,
@@ -46,8 +43,7 @@ export class OrdersController {
     return this.ordersService.removeFromCart(token, maCtgh);
   }
 
-  // ── ĐẶT HÀNG ──────────────────────────────────────────────────────────────
-  // POST /api/orders               → Tạo đơn hàng & thanh toán mô phỏng
+  // ── ĐẶT HÀNG (Luồng cũ: MoMo, VNPay) ────────────────────────────────────
   @Post()
   createOrder(
     @CurrentToken() token: string,
@@ -56,7 +52,6 @@ export class OrdersController {
     return this.ordersService.createOrder(token, dto);
   }
 
-  // POST /api/orders/:maDh/cancel   → Hủy đơn hàng và hoàn tiền
   @Post(':maDh/cancel')
   cancelOrder(
     @CurrentToken() token: string,
@@ -66,14 +61,12 @@ export class OrdersController {
   }
 
   // ── LỊCH SỬ ĐƠN HÀNG ─────────────────────────────────────────────────────
-  // GET /api/orders/history        → Lịch sử đơn hàng
   @Get('history')
   getOrderHistory(@CurrentToken() token: string) {
     return this.ordersService.getOrderHistory(token);
   }
 
-  // ── VÍ VOUCHER (MY VOUCHERS) ──────────────────────────────────────────────
-  // GET /api/orders/my-vouchers?trang_thai=chua_su_dung → Ví voucher với bộ lọc tab
+  // ── VÍ VOUCHER ────────────────────────────────────────────────────────────
   @Get('my-vouchers')
   getMyVouchers(
     @CurrentToken() token: string,
@@ -82,7 +75,6 @@ export class OrdersController {
     return this.ordersService.getMyVouchers(token, trangThai);
   }
 
-  // GET /api/orders/my-vouchers/:maVoucherCode → Chi tiết 1 mã voucher (có QR)
   @Get('my-vouchers/:maVoucherCode')
   getVoucherCodeDetail(
     @CurrentToken() token: string,
@@ -92,7 +84,6 @@ export class OrdersController {
   }
 
   // ── ĐÁNH GIÁ ─────────────────────────────────────────────────────────────
-  // POST /api/orders/reviews       → Gửi đánh giá voucher
   @Post('reviews')
   createReview(
     @CurrentToken() token: string,
@@ -102,7 +93,6 @@ export class OrdersController {
   }
 
   // ── KHIẾU NẠI ────────────────────────────────────────────────────────────
-  // POST /api/orders/complaints    → Gửi khiếu nại voucher
   @Post('complaints')
   createComplaint(
     @CurrentToken() token: string,
@@ -110,5 +100,45 @@ export class OrdersController {
   ) {
     return this.ordersService.createComplaint(token, dto);
   }
-}
 
+  // ── STRIPE CHECKOUT ───────────────────────────────────────────────────────
+  // GET /api/orders/stripe/config  → Trả về Stripe Public Key
+  @Get('stripe/config')
+  getStripeConfig() {
+    return this.ordersService.getStripeConfig();
+  }
+
+  // POST /api/orders/stripe/create-checkout → Tạo Stripe Checkout Session, trả về URL
+  @Post('stripe/create-checkout')
+  async createStripeCheckout(
+    @CurrentToken() token: string,
+    @Body() body: { email_nhan_voucher?: string },
+  ) {
+    const result = await this.ordersService.createStripeCheckoutSession(
+      token,
+      body.email_nhan_voucher,
+    );
+    // Trả về JSON để frontend dùng fetch() rồi redirect tự tay
+    return { success: true, url: result.url };
+  }
+
+  // GET /api/orders/stripe/success → Stripe callback sau khi thanh toán thành công
+  // NestJS sẽ tự redirect về frontend với thông tin đơn hàng
+  @Get('stripe/success')
+  async stripeSuccess(
+    @CurrentToken() token: string,
+    @Query('session_id') sessionId: string,
+  ) {
+    const result = await this.ordersService.handleStripeSuccess(token, sessionId);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Trả về redirect HTML đơn giản
+    return `<html><head><meta http-equiv="refresh" content="0;url=${frontendUrl}/order-success?stripe=1&ma_dh=${result.ma_dh}&total=${result.tong_tien}"></head><body>Đang chuyển hướng...</body></html>`;
+  }
+
+  // GET /api/orders/stripe/cancel  → Stripe callback khi người dùng huỷ
+  @Get('stripe/cancel')
+  stripeCancel() {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return `<html><head><meta http-equiv="refresh" content="0;url=${frontendUrl}/checkout?stripe_cancelled=1"></head><body>Đang chuyển hướng...</body></html>`;
+  }
+}

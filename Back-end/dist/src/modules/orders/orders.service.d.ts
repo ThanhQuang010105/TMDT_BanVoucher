@@ -120,4 +120,15 @@ export declare class OrdersService {
         data: any;
         message: string;
     }>;
+    getStripeConfig(): {
+        success: boolean;
+        publishableKey: string | undefined;
+    };
+    createStripeCheckoutSession(accessToken: string, emailNhanVoucher?: string): Promise<{
+        url: string;
+    }>;
+    handleStripeSuccess(accessToken: string, sessionId: string): Promise<{
+        ma_dh: string;
+        tong_tien: number;
+    }>;
 }

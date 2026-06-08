@@ -213,15 +213,24 @@ let OrdersService = class OrdersService {
         voucher ( ma_voucher, ten_voucher, gia_ban, ngay_kt, link_voucher_banner, doi_tac ( ten_doanh_nghiep ) ),
         don_hang ( ma_dh, ngay_tao_don )
       `)
-            .in('ma_dh', maDhList)
-            .order('ma_voucher_code', { ascending: false });
+            .in('ma_dh', maDhList);
         if (trang_thai) {
             query = query.eq('trang_thai', trang_thai);
         }
         const { data, error } = await query;
         if (error)
             throw new common_1.InternalServerErrorException(error.message);
-        return { data: data ?? [] };
+        const sortedData = (data ?? []).sort((a, b) => {
+            const dateA = new Date(a.don_hang?.ngay_tao_don || 0).getTime();
+            const dateB = new Date(b.don_hang?.ngay_tao_don || 0).getTime();
+            if (dateB !== dateA) {
+                return dateB - dateA;
+            }
+            const vA = a.voucher?.ma_voucher || '';
+            const vB = b.voucher?.ma_voucher || '';
+            return vA.localeCompare(vB);
+        });
+        return { data: sortedData };
     }
     async getVoucherCodeDetail(accessToken, maVoucherCode) {
         const client = this.supabaseService.getClient();
@@ -433,6 +442,146 @@ let OrdersService = class OrdersService {
             data,
             message: 'Gửi khiếu nại thành công.',
         };
+    }
+    getStripeConfig() {
+        return {
+            success: true,
+            publishableKey: process.env.STRIPE_PUBLIC_KEY,
+        };
+    }
+    async createStripeCheckoutSession(accessToken, emailNhanVoucher) {
+        const Stripe = require('stripe');
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const client = this.supabaseService.getClient();
+        const maKh = await this.getKhachHang(accessToken);
+        const { data: cartItems, error: cartError } = await client
+            .from('chi_tiet_gio_hang')
+            .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( ten_voucher, gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt, link_voucher_banner )`)
+            .eq('ma_kh', maKh);
+        if (cartError)
+            throw new common_1.InternalServerErrorException(cartError.message);
+        if (!cartItems || cartItems.length === 0)
+            throw new common_1.BadRequestException('Giỏ hàng trống.');
+        const now = new Date().toISOString();
+        for (const item of cartItems) {
+            const v = item.voucher;
+            if (v.trang_thai !== 'active')
+                throw new common_1.BadRequestException(`Voucher ${item.ma_voucher} không còn hoạt động.`);
+            if (v.ngay_kt < now)
+                throw new common_1.BadRequestException(`Voucher ${item.ma_voucher} đã hết hạn.`);
+            const conLai = v.so_luong_phat_hanh - v.so_luong_da_ban;
+            if (item.so_luong_mua > conLai)
+                throw new common_1.BadRequestException(`Voucher ${item.ma_voucher} chỉ còn ${conLai} trong kho.`);
+        }
+        const lineItems = cartItems.map((item) => {
+            const v = item.voucher;
+            const unitAmountCents = Math.round((v.gia_ban / 25000) * 100);
+            return {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: v.ten_voucher,
+                        description: `VoucherHub - Thanh toán voucher`,
+                        ...(v.link_voucher_banner ? { images: [v.link_voucher_banner] } : {}),
+                    },
+                    unit_amount: unitAmountCents,
+                },
+                quantity: item.so_luong_mua,
+            };
+        });
+        const backendUrl = `http://localhost:3001`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: lineItems,
+            mode: 'payment',
+            success_url: `${backendUrl}/api/orders/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${backendUrl}/api/orders/stripe/cancel`,
+            metadata: {
+                ma_kh: maKh,
+                email_nhan_voucher: emailNhanVoucher || '',
+            },
+        });
+        return { url: session.url };
+    }
+    async handleStripeSuccess(accessToken, sessionId) {
+        const Stripe = require('stripe');
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+        if (stripeSession.payment_status !== 'paid') {
+            throw new common_1.BadRequestException('Giao dịch chưa hoàn tất.');
+        }
+        const maKh = stripeSession.metadata?.ma_kh;
+        if (!maKh)
+            throw new common_1.BadRequestException('Không tìm thấy thông tin khách hàng từ phiên Stripe.');
+        const client = this.supabaseService.getClient();
+        const { data: cartItems, error: cartError } = await client
+            .from('chi_tiet_gio_hang')
+            .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt )`)
+            .eq('ma_kh', maKh);
+        if (cartError)
+            throw new common_1.InternalServerErrorException(cartError.message);
+        if (!cartItems || cartItems.length === 0)
+            throw new common_1.BadRequestException('Giỏ hàng trống hoặc đã được xử lý.');
+        let tongTien = 0;
+        const validItems = [];
+        for (const item of cartItems) {
+            const v = item.voucher;
+            tongTien += v.gia_ban * item.so_luong_mua;
+            validItems.push(item);
+        }
+        const maDh = `DH-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        const { error: dhError } = await client.from('don_hang').insert({
+            ma_dh: maDh,
+            ma_kh: maKh,
+            tong_tien: tongTien,
+            phuong_thuc_thanh_toan: 'the_quoc_te',
+            trang_thai_thanh_toan: 'thanh_cong',
+        });
+        if (dhError)
+            throw new common_1.InternalServerErrorException(dhError.message);
+        const chiTietList = [];
+        const voucherCodesInsert = [];
+        for (const item of validItems) {
+            const v = item.voucher;
+            const maCtdh = `CTDH-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+            chiTietList.push({
+                ma_ctdh: maCtdh,
+                ma_dh: maDh,
+                ma_voucher: item.ma_voucher,
+                so_luong_mua: item.so_luong_mua,
+                don_gia_mua: v.gia_ban,
+            });
+            for (let i = 0; i < item.so_luong_mua; i++) {
+                voucherCodesInsert.push({
+                    ma_voucher_code: `VC-${(0, uuid_1.v4)().slice(0, 12).toUpperCase()}`,
+                    ma_voucher: item.ma_voucher,
+                    ma_dh: maDh,
+                    trang_thai: 'chua_su_dung',
+                    chuoi_ma_bao_mat: (0, uuid_1.v4)().replace(/-/g, ''),
+                });
+            }
+            await client.rpc('increment_so_luong_da_ban', {
+                p_ma_voucher: item.ma_voucher,
+                p_so_luong: item.so_luong_mua,
+            });
+        }
+        const { error: ctdhError } = await client.from('chi_tiet_don_hang').insert(chiTietList);
+        if (ctdhError)
+            throw new common_1.InternalServerErrorException(ctdhError.message);
+        const { error: vcError } = await client.from('voucher_phat_hanh').insert(voucherCodesInsert);
+        if (vcError)
+            throw new common_1.InternalServerErrorException(vcError.message);
+        const maLs = `LS-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
+        await client.from('lich_su_giao_dich').insert({
+            ma_ls: maLs,
+            ma_dh: maDh,
+            so_tien: tongTien,
+            phuong_thuc_thanh_toan: 'the_quoc_te',
+            trang_thai_thanh_toan: 'thanh_cong',
+        });
+        await client.from('chi_tiet_gio_hang').delete().eq('ma_kh', maKh);
+        return { ma_dh: maDh, tong_tien: tongTien };
     }
 };
 exports.OrdersService = OrdersService;
