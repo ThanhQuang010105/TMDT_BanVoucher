@@ -39,9 +39,10 @@ async function bootstrap() {
   // ──────────────────────────────────────────────────────────────────────────
 
   app.enableCors();
-  await app.listen(3001);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
 
-  console.log('🚀 Server đang chạy tại: http://localhost:3001');
-  console.log('📖 Swagger UI tại:       http://localhost:3001/api/docs');
+  console.log(`🚀 Server đang chạy tại: http://localhost:${port}`);
+  console.log(`📖 Swagger UI tại:       http://localhost:${port}/api/docs`);
 }
 bootstrap();
