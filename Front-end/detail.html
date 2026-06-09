@@ -251,13 +251,22 @@
                 // Load đánh giá
                 const reviewList = document.getElementById('review-list');
                 if (v.danh_gia && v.danh_gia.length > 0) {
+                    const currentUser = Auth.getUser();
                     let reviewHtml = '';
                     v.danh_gia.forEach(dg => {
+                        const isOwner = currentUser && dg.khach_hang?.ma_tk === currentUser.id;
                         reviewHtml += `
                         <div class="border-b border-outline-variant/20 pb-3 last:border-0 last:pb-0">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="font-bold text-xs text-on-surface">${dg.khach_hang?.ho_ten || 'Khách hàng ẩn danh'}</span>
-                                <span class="text-[10px] text-outline">${formatDate(dg.ngay_danh_gia)}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-outline">${formatDate(dg.ngay_danh_gia)}</span>
+                                    ${isOwner ? `
+                                        <button onclick="handleDeleteReview('${dg.ma_dg}')" class="text-error hover:underline text-[11px] font-bold flex items-center gap-0.5 active:scale-95 transition-transform">
+                                            <span class="material-symbols-outlined text-[12px]">delete</span> Xóa
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
                             <div class="flex gap-0.5 mb-1">
                                 ${Array.from({ length: 5 }).map((_, i) => `
@@ -272,6 +281,19 @@
                 } else {
                     reviewList.innerHTML = `<p class="text-xs text-outline">Voucher này chưa có đánh giá nào.</p>`;
                 }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function handleDeleteReview(maDg) {
+            if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) return;
+            try {
+                const res = await apiFetch(`/api/orders/reviews/${maDg}`, {
+                    method: 'DELETE'
+                });
+                showToast(res.message || 'Đã xóa đánh giá thành công.', 'success');
+                loadVoucherDetail();
             } catch (err) {
                 showToast(err.message, 'error');
             }
@@ -315,7 +337,7 @@
         async function handleBuyNow() {
             const qty = parseInt(document.getElementById('buy-qty').value);
             try {
-                // 1. Thêm vào giỏ
+                // 1. Thêm voucher này vào giỏ hàng
                 await apiFetch('/api/orders/cart', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -323,15 +345,26 @@
                         so_luong_mua: qty
                     })
                 });
-                
-                // 2. Chuyển ngay đến trang giỏ hàng để hoàn thành thanh toán
+
+                // 2. Lấy toàn bộ giỏ hàng, tìm đúng item vừa thêm
                 const cartRes = await apiFetch('/api/orders/cart');
                 const cartItems = cartRes.data || [];
-                const checkoutTotal = cartItems.reduce((sum, item) => {
+
+                // Chỉ lấy voucher đang xem, không lấy những cái khác trong giỏ
+                const thisItem = cartItems.find(item => item.voucher?.ma_voucher === maVoucher || item.ma_voucher === maVoucher);
+                const selectedItems = thisItem ? [thisItem] : cartItems.filter(item => item.ma_voucher === maVoucher);
+
+                if (selectedItems.length === 0) {
+                    showToast('Không tìm thấy sản phẩm trong giỏ, vui lòng thử lại.', 'error');
+                    return;
+                }
+
+                const checkoutTotal = selectedItems.reduce((sum, item) => {
                     return sum + ((item.voucher?.gia_ban || 0) * (item.so_luong_mua || 0));
                 }, 0);
 
-                sessionStorage.setItem('checkout_items', JSON.stringify(cartItems));
+                // 3. Chỉ chuyển voucher này đến trang thanh toán
+                sessionStorage.setItem('checkout_items', JSON.stringify(selectedItems));
                 sessionStorage.setItem('checkout_total', checkoutTotal);
                 window.location.href = 'checkout.html';
             } catch (err) {

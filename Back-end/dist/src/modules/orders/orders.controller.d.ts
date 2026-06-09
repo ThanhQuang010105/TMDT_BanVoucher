@@ -114,6 +114,10 @@ export declare class OrdersController {
         message: string;
         ma_dg: string;
     }>;
+    deleteReview(token: string, maDg: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     createComplaint(token: string, dto: CreateComplaintDto): Promise<{
         success: boolean;
         data: any;
@@ -125,6 +129,7 @@ export declare class OrdersController {
     };
     createStripeCheckout(token: string, body: {
         email_nhan_voucher?: string;
+        ma_ctgh_list?: string[];
     }): Promise<{
         success: boolean;
         url: string;

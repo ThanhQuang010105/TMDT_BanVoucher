@@ -50,6 +50,10 @@ export declare class AdminController {
         };
         message: string;
     }>;
+    deleteUser(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getPendingVouchers(): Promise<{
         success: boolean;
         data: any[];

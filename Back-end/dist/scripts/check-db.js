@@ -38,10 +38,9 @@ const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const supabase = (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 async function test() {
-    const ids = ['1be06d5d-aa9d-4328-b1cd-3c9b82b2e701', 'b26d3000-7d5a-4391-bd9f-45a2bf9b10d6'];
-    const { data: dt } = await supabase.from('doi_tac').select('*').in('ma_tk', ids);
-    console.log('--- DOI_TAC FOR RECENT PARTNERS ---');
-    console.log(dt);
+    const { data: tk } = await supabase.from('tai_khoan').select('ma_tk, username, vai_tro, trang_thai_hoat_dong').order('ngay_tao', { ascending: false }).limit(10);
+    console.log('--- RECENT TAI_KHOAN ---');
+    console.log(tk);
 }
 test();
-//# sourceMappingURL=check-partners.js.map
+//# sourceMappingURL=check-db.js.map

@@ -62,6 +62,19 @@ let AdminService = class AdminService {
             .eq('ma_tk', userId);
         return { success: true, data, message: 'Mở khóa tài khoản thành công' };
     }
+    async deleteUser(userId) {
+        const client = this.supabase.getClient();
+        await client.from('khach_hang').delete().eq('ma_tk', userId);
+        await client.from('doi_tac').delete().eq('ma_tk', userId);
+        const { error: dbError } = await client
+            .from('tai_khoan')
+            .delete()
+            .eq('ma_tk', userId);
+        await client.auth.admin.deleteUser(userId);
+        if (dbError)
+            throw new common_1.BadRequestException(dbError.message);
+        return { success: true, message: 'Xóa tài khoản thành công' };
+    }
     async getPendingVouchers() {
         const { data, error } = await this.supabase
             .getClient()

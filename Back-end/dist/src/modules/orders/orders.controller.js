@@ -53,6 +53,9 @@ let OrdersController = class OrdersController {
     createReview(token, dto) {
         return this.ordersService.createReview(token, dto);
     }
+    deleteReview(token, maDg) {
+        return this.ordersService.deleteReview(token, maDg);
+    }
     createComplaint(token, dto) {
         return this.ordersService.createComplaint(token, dto);
     }
@@ -60,7 +63,7 @@ let OrdersController = class OrdersController {
         return this.ordersService.getStripeConfig();
     }
     async createStripeCheckout(token, body) {
-        const result = await this.ordersService.createStripeCheckoutSession(token, body.email_nhan_voucher);
+        const result = await this.ordersService.createStripeCheckoutSession(token, body.email_nhan_voucher, body.ma_ctgh_list);
         return { success: true, url: result.url };
     }
     async stripeSuccess(token, sessionId) {
@@ -144,6 +147,14 @@ __decorate([
     __metadata("design:paramtypes", [String, create_review_dto_1.CreateReviewDto]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "createReview", null);
+__decorate([
+    (0, common_1.Delete)('reviews/:maDg'),
+    __param(0, (0, current_token_decorator_1.CurrentToken)()),
+    __param(1, (0, common_1.Param)('maDg')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "deleteReview", null);
 __decorate([
     (0, common_1.Post)('complaints'),
     __param(0, (0, current_token_decorator_1.CurrentToken)()),

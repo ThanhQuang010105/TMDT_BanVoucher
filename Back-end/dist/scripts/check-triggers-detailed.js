@@ -38,10 +38,10 @@ const dotenv = __importStar(require("dotenv"));
 dotenv.config();
 const supabase = (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 async function test() {
-    const ids = ['1be06d5d-aa9d-4328-b1cd-3c9b82b2e701', 'b26d3000-7d5a-4391-bd9f-45a2bf9b10d6'];
-    const { data: dt } = await supabase.from('doi_tac').select('*').in('ma_tk', ids);
-    console.log('--- DOI_TAC FOR RECENT PARTNERS ---');
-    console.log(dt);
+    const { data, error } = await supabase.rpc('inspect_triggers');
+    console.log('inspect_triggers:', data, error);
+    const { data: triggers, error: trErr } = await supabase.from('pg_trigger').select('*');
+    console.log('triggers:', triggers, trErr);
 }
 test();
-//# sourceMappingURL=check-partners.js.map
+//# sourceMappingURL=check-triggers-detailed.js.map

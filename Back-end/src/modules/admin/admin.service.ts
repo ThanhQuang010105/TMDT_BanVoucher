@@ -60,6 +60,27 @@ export class AdminService {
     return { success: true, data, message: 'Mở khóa tài khoản thành công' };
   }
 
+  async deleteUser(userId: string) {
+    const client = this.supabase.getClient();
+
+    // 1. Xóa hồ sơ khách hàng/đối tác trước do ràng buộc khóa ngoại
+    await client.from('khach_hang').delete().eq('ma_tk', userId);
+    await client.from('doi_tac').delete().eq('ma_tk', userId);
+
+    // 2. Xóa tài khoản trong DB
+    const { error: dbError } = await client
+      .from('tai_khoan')
+      .delete()
+      .eq('ma_tk', userId);
+
+    // 3. Xóa user trên Supabase Auth
+    await client.auth.admin.deleteUser(userId);
+
+    if (dbError) throw new BadRequestException(dbError.message);
+
+    return { success: true, message: 'Xóa tài khoản thành công' };
+  }
+
   async getPendingVouchers() {
     const { data, error } = await this.supabase
       .getClient()

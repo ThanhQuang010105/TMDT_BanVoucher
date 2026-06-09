@@ -218,9 +218,16 @@
     document.getElementById('cart-subtitle').textContent = `Bạn có ${cartItems.length} voucher trong giỏ hàng`;
     document.getElementById('checkout-btn').disabled = false;
 
-    container.innerHTML = cartItems.map(item => `
+    // Thêm header chọn tất cả
+    container.innerHTML = `
+      <div class="flex items-center gap-3 px-2 pb-2 border-b border-outline-variant">
+        <input type="checkbox" id="select-all" class="w-5 h-5 accent-primary rounded cursor-pointer" onchange="toggleSelectAll(this.checked)">
+        <label for="select-all" class="text-sm font-semibold text-on-surface-variant cursor-pointer select-none">Chọn tất cả</label>
+      </div>
+    ` + cartItems.map(item => `
       <div class="cart-item bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant flex flex-col md:flex-row items-center gap-6 group" id="item-${item.ma_ctgh}">
-        <div class="w-full md:w-32 h-32 rounded-lg overflow-hidden shrink-0 bg-surface-container">
+        <input type="checkbox" id="check-${item.ma_ctgh}" class="item-checkbox w-5 h-5 accent-primary rounded shrink-0 cursor-pointer" checked onchange="updateSummary()">
+        <div class="w-full md:w-28 h-28 rounded-lg overflow-hidden shrink-0 bg-surface-container">
           <img src="${getVoucherImage(item.voucher)}" alt="${item.voucher?.ten_voucher || 'Voucher'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" onerror="handleVoucherImageError(this, '${item.voucher?.ten_voucher || ''}')"/>
         </div>
         <div class="flex-grow flex flex-col md:flex-row justify-between items-center w-full gap-4">
@@ -270,12 +277,22 @@
   }
 
   function updateSummary() {
-    const total = cartItems.reduce((sum, item) => sum + ((item.voucher?.gia_ban || 0) * (item.so_luong_mua || 0)), 0);
-    const count = cartItems.reduce((sum, item) => sum + (item.so_luong_mua || 0), 0);
-    document.getElementById('item-count-text').textContent = `${count} sản phẩm`;
+    const selected = getSelectedItems();
+    const total = selected.reduce((sum, item) => sum + ((item.voucher?.gia_ban || 0) * (item.so_luong_mua || 0)), 0);
+    const count = selected.reduce((sum, item) => sum + (item.so_luong_mua || 0), 0);
+    document.getElementById('item-count-text').textContent = `${count} sản phẩm được chọn`;
     document.getElementById('subtotal-text').textContent = formatCurrency(total);
     document.getElementById('total-text').textContent = formatCurrency(total);
     document.getElementById('cart-badge').textContent = cartItems.length;
+    const btn = document.getElementById('checkout-btn');
+    btn.disabled = selected.length === 0;
+  }
+
+  function getSelectedItems() {
+    return cartItems.filter(item => {
+      const cb = document.getElementById(`check-${item.ma_ctgh}`);
+      return cb && cb.checked;
+    });
   }
 
   async function removeItem(maCtgh) {
@@ -303,11 +320,17 @@
     updateSummary();
   }
 
+  function toggleSelectAll(checked) {
+    document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = checked);
+    updateSummary();
+  }
+
   function proceedToCheckout() {
-    if (cartItems.length === 0) { showToast('Giỏ hàng trống!', 'error'); return; }
-    const total = cartItems.reduce((sum, item) => sum + ((item.voucher?.gia_ban || 0) * (item.so_luong_mua || 0)), 0);
+    const selected = getSelectedItems();
+    if (selected.length === 0) { showToast('Vui lòng chọn ít nhất 1 voucher để thanh toán!', 'error'); return; }
+    const total = selected.reduce((sum, item) => sum + ((item.voucher?.gia_ban || 0) * (item.so_luong_mua || 0)), 0);
     sessionStorage.setItem('checkout_total', total);
-    sessionStorage.setItem('checkout_items', JSON.stringify(cartItems));
+    sessionStorage.setItem('checkout_items', JSON.stringify(selected));
     window.location.href = 'checkout.html';
   }
 </script>

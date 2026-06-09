@@ -92,6 +92,14 @@ export class OrdersController {
     return this.ordersService.createReview(token, dto);
   }
 
+  @Delete('reviews/:maDg')
+  deleteReview(
+    @CurrentToken() token: string,
+    @Param('maDg') maDg: string,
+  ) {
+    return this.ordersService.deleteReview(token, maDg);
+  }
+
   // ── KHIẾU NẠI ────────────────────────────────────────────────────────────
   @Post('complaints')
   createComplaint(
@@ -112,11 +120,12 @@ export class OrdersController {
   @Post('stripe/create-checkout')
   async createStripeCheckout(
     @CurrentToken() token: string,
-    @Body() body: { email_nhan_voucher?: string },
+    @Body() body: { email_nhan_voucher?: string; ma_ctgh_list?: string[] },
   ) {
     const result = await this.ordersService.createStripeCheckoutSession(
       token,
       body.email_nhan_voucher,
+      body.ma_ctgh_list,
     );
     // Trả về JSON để frontend dùng fetch() rồi redirect tự tay
     return { success: true, url: result.url };

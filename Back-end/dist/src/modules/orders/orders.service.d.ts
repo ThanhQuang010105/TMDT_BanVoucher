@@ -120,11 +120,15 @@ export declare class OrdersService {
         data: any;
         message: string;
     }>;
+    deleteReview(accessToken: string, maDanhGia: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getStripeConfig(): {
         success: boolean;
         publishableKey: string | undefined;
     };
-    createStripeCheckoutSession(accessToken: string, emailNhanVoucher?: string): Promise<{
+    createStripeCheckoutSession(accessToken: string, emailNhanVoucher?: string, maCtghList?: string[]): Promise<{
         url: string;
     }>;
     handleStripeSuccess(accessToken: string, sessionId: string): Promise<{

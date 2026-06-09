@@ -239,12 +239,11 @@ export class VouchersService {
       .eq('ma_dt', (voucher as any).doi_tac?.ma_dt ?? '')
       .eq('trang_thai_hoat_dong', 'active');
 
-    // Lấy đánh giá và điểm trung bình
     const { data: reviews } = await client
       .from('danh_gia')
       .select(`
-        ma_dg, diem_so_dg, noi_dung_binh_luan, ngay_danh_gia,
-        khach_hang ( ho_ten )
+        ma_dg, diem_so_dg, noi_dung_binh_luan, ngay_danh_gia, ma_kh,
+        khach_hang ( ho_ten, ma_tk )
       `)
       .eq('ma_voucher', maVoucher)
       .order('ngay_danh_gia', { ascending: false })

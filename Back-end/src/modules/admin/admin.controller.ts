@@ -25,6 +25,11 @@ export class AdminController {
     return this.adminService.unbanUser(id);
   }
 
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string) {
+    return this.adminService.deleteUser(id);
+  }
+
   @Get('vouchers/pending')
   getPendingVouchers() {
     return this.adminService.getPendingVouchers();

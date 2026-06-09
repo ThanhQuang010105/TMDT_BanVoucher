@@ -404,23 +404,22 @@ let OrdersService = class OrdersService {
     async createComplaint(accessToken, dto) {
         const client = this.supabaseService.getClient();
         const maKh = await this.getKhachHang(accessToken);
-        const { data: orders } = await client
+        const { data: voucherRecord, error: vcError } = await client
+            .from('voucher_phat_hanh')
+            .select('ma_voucher_code, ma_voucher, ma_dh')
+            .eq('ma_voucher_code', dto.ma_voucher_code)
+            .single();
+        if (vcError || !voucherRecord) {
+            throw new common_1.ForbiddenException('Không tìm thấy voucher này.');
+        }
+        const { data: order } = await client
             .from('don_hang')
             .select('ma_dh')
+            .eq('ma_dh', voucherRecord.ma_dh)
             .eq('ma_kh', maKh)
-            .eq('trang_thai_thanh_toan', 'thanh_cong');
-        const maDhList = (orders ?? []).map((o) => o.ma_dh);
-        if (maDhList.length === 0) {
-            throw new common_1.ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
-        }
-        const { data: purchaseRecord } = await client
-            .from('voucher_phat_hanh')
-            .select('ma_voucher_code')
-            .eq('ma_voucher', dto.ma_voucher)
-            .in('ma_dh', maDhList)
-            .limit(1)
+            .eq('trang_thai_thanh_toan', 'thanh_cong')
             .single();
-        if (!purchaseRecord) {
+        if (!order) {
             throw new common_1.ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
         }
         const maKN = `KN-${(0, uuid_1.v4)().slice(0, 8).toUpperCase()}`;
@@ -429,7 +428,7 @@ let OrdersService = class OrdersService {
             .insert({
             ma_kn: maKN,
             ma_kh: maKh,
-            ma_voucher: dto.ma_voucher,
+            ma_voucher: voucherRecord.ma_voucher,
             ly_do: dto.ly_do,
             trang_thai_xl: 'pending',
         })
@@ -443,21 +442,45 @@ let OrdersService = class OrdersService {
             message: 'Gửi khiếu nại thành công.',
         };
     }
+    async deleteReview(accessToken, maDanhGia) {
+        const client = this.supabaseService.getClient();
+        const maKh = await this.getKhachHang(accessToken);
+        const { data: review, error: findErr } = await client
+            .from('danh_gia')
+            .select('ma_dg')
+            .eq('ma_dg', maDanhGia)
+            .eq('ma_kh', maKh)
+            .single();
+        if (findErr || !review) {
+            throw new common_1.ForbiddenException('Bạn không có quyền xóa bình luận này.');
+        }
+        const { error } = await client
+            .from('danh_gia')
+            .delete()
+            .eq('ma_dg', maDanhGia);
+        if (error)
+            throw new common_1.InternalServerErrorException(error.message);
+        return { success: true, message: 'Đã xóa bình luận thành công.' };
+    }
     getStripeConfig() {
         return {
             success: true,
             publishableKey: process.env.STRIPE_PUBLIC_KEY,
         };
     }
-    async createStripeCheckoutSession(accessToken, emailNhanVoucher) {
+    async createStripeCheckoutSession(accessToken, emailNhanVoucher, maCtghList) {
         const Stripe = require('stripe');
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         const client = this.supabaseService.getClient();
         const maKh = await this.getKhachHang(accessToken);
-        const { data: cartItems, error: cartError } = await client
+        let query = client
             .from('chi_tiet_gio_hang')
             .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( ten_voucher, gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt, link_voucher_banner )`)
             .eq('ma_kh', maKh);
+        if (maCtghList && maCtghList.length > 0) {
+            query = query.in('ma_ctgh', maCtghList);
+        }
+        const { data: cartItems, error: cartError } = await query;
         if (cartError)
             throw new common_1.InternalServerErrorException(cartError.message);
         if (!cartItems || cartItems.length === 0)
@@ -489,8 +512,7 @@ let OrdersService = class OrdersService {
                 quantity: item.so_luong_mua,
             };
         });
-        const backendUrl = `http://localhost:3001`;
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: lineItems,
@@ -500,6 +522,7 @@ let OrdersService = class OrdersService {
             metadata: {
                 ma_kh: maKh,
                 email_nhan_voucher: emailNhanVoucher || '',
+                ma_ctgh_list: cartItems.map(i => i.ma_ctgh).join(','),
             },
         });
         return { url: session.url };
@@ -514,11 +537,17 @@ let OrdersService = class OrdersService {
         const maKh = stripeSession.metadata?.ma_kh;
         if (!maKh)
             throw new common_1.BadRequestException('Không tìm thấy thông tin khách hàng từ phiên Stripe.');
+        const maCtghListStr = stripeSession.metadata?.ma_ctgh_list || '';
+        const maCtghList = maCtghListStr ? maCtghListStr.split(',').filter(Boolean) : [];
         const client = this.supabaseService.getClient();
-        const { data: cartItems, error: cartError } = await client
+        let cartQuery = client
             .from('chi_tiet_gio_hang')
             .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt )`)
             .eq('ma_kh', maKh);
+        if (maCtghList.length > 0) {
+            cartQuery = cartQuery.in('ma_ctgh', maCtghList);
+        }
+        const { data: cartItems, error: cartError } = await cartQuery;
         if (cartError)
             throw new common_1.InternalServerErrorException(cartError.message);
         if (!cartItems || cartItems.length === 0)
@@ -580,7 +609,12 @@ let OrdersService = class OrdersService {
             phuong_thuc_thanh_toan: 'the_quoc_te',
             trang_thai_thanh_toan: 'thanh_cong',
         });
-        await client.from('chi_tiet_gio_hang').delete().eq('ma_kh', maKh);
+        if (maCtghList.length > 0) {
+            await client.from('chi_tiet_gio_hang').delete().in('ma_ctgh', maCtghList);
+        }
+        else {
+            await client.from('chi_tiet_gio_hang').delete().eq('ma_kh', maKh);
+        }
         return { ma_dh: maDh, tong_tien: tongTien };
     }
 };

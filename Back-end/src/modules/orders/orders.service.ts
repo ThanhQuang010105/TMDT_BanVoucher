@@ -506,28 +506,27 @@ export class OrdersService {
     const client = this.supabaseService.getClient();
     const maKh = await this.getKhachHang(accessToken);
 
-    // Kiểm tra xem khách hàng có thực sự mua voucher này chưa
-    const { data: orders } = await client
-      .from('don_hang')
-      .select('ma_dh')
-      .eq('ma_kh', maKh)
-      .eq('trang_thai_thanh_toan', 'thanh_cong');
-
-    const maDhList = (orders ?? []).map((o: any) => o.ma_dh);
-
-    if (maDhList.length === 0) {
-      throw new ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
-    }
-
-    const { data: purchaseRecord } = await client
+    // Tìm bản ghi voucher_phat_hanh theo ma_voucher_code (mã cụ thể của voucher đó)
+    const { data: voucherRecord, error: vcError } = await client
       .from('voucher_phat_hanh')
-      .select('ma_voucher_code')
-      .eq('ma_voucher', dto.ma_voucher)
-      .in('ma_dh', maDhList)
-      .limit(1)
+      .select('ma_voucher_code, ma_voucher, ma_dh')
+      .eq('ma_voucher_code', dto.ma_voucher_code)
       .single();
 
-    if (!purchaseRecord) {
+    if (vcError || !voucherRecord) {
+      throw new ForbiddenException('Không tìm thấy voucher này.');
+    }
+
+    // Xác minh đơn hàng thuộc về khách hàng này
+    const { data: order } = await client
+      .from('don_hang')
+      .select('ma_dh')
+      .eq('ma_dh', voucherRecord.ma_dh)
+      .eq('ma_kh', maKh)
+      .eq('trang_thai_thanh_toan', 'thanh_cong')
+      .single();
+
+    if (!order) {
       throw new ForbiddenException('Bạn chỉ có thể khiếu nại các voucher đã mua thành công.');
     }
 
@@ -538,7 +537,7 @@ export class OrdersService {
       .insert({
         ma_kn: maKN,
         ma_kh: maKh,
-        ma_voucher: dto.ma_voucher,
+        ma_voucher: voucherRecord.ma_voucher,
         ly_do: dto.ly_do,
         trang_thai_xl: 'pending',
       })
@@ -554,6 +553,33 @@ export class OrdersService {
     };
   }
 
+  // ─── XÓA ĐÁNH GIÁ CỦA BẢN THÂN ──────────────────────────────────────────────
+  async deleteReview(accessToken: string, maDanhGia: string) {
+    const client = this.supabaseService.getClient();
+    const maKh = await this.getKhachHang(accessToken);
+
+    // Kiểm tra bình luận thuộc về khách hàng này
+    const { data: review, error: findErr } = await client
+      .from('danh_gia')
+      .select('ma_dg')
+      .eq('ma_dg', maDanhGia)
+      .eq('ma_kh', maKh)
+      .single();
+
+    if (findErr || !review) {
+      throw new ForbiddenException('Bạn không có quyền xóa bình luận này.');
+    }
+
+    const { error } = await client
+      .from('danh_gia')
+      .delete()
+      .eq('ma_dg', maDanhGia);
+
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return { success: true, message: 'Đã xóa bình luận thành công.' };
+  }
+
   // ─── STRIPE CHECKOUT ─────────────────────────────────────────────────────────
 
   /** Trả về Stripe Public Key để frontend khởi tạo Stripe.js nếu cần */
@@ -564,8 +590,12 @@ export class OrdersService {
     };
   }
 
-  /** Tạo Stripe Checkout Session từ giỏ hàng hiện tại của khách hàng */
-  async createStripeCheckoutSession(accessToken: string, emailNhanVoucher?: string) {
+  /** Tạo Stripe Checkout Session từ những item được chọn trong giỏ hàng */
+  async createStripeCheckoutSession(
+    accessToken: string,
+    emailNhanVoucher?: string,
+    maCtghList?: string[], // Danh sách ID item được chọn
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Stripe = require('stripe');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -574,10 +604,17 @@ export class OrdersService {
     const maKh = await this.getKhachHang(accessToken);
 
     // Lấy giỏ hàng với thông tin voucher
-    const { data: cartItems, error: cartError } = await client
+    let query = client
       .from('chi_tiet_gio_hang')
       .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( ten_voucher, gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt, link_voucher_banner )`)
       .eq('ma_kh', maKh);
+
+    // Nếu có danh sách item được chọn, chỉ lấy đúng những item đó
+    if (maCtghList && maCtghList.length > 0) {
+      query = query.in('ma_ctgh', maCtghList);
+    }
+
+    const { data: cartItems, error: cartError } = await query;
 
     if (cartError) throw new InternalServerErrorException(cartError.message);
     if (!cartItems || cartItems.length === 0) throw new BadRequestException('Giỏ hàng trống.');
@@ -611,8 +648,7 @@ export class OrdersService {
       };
     });
 
-    const backendUrl = `http://localhost:3001`;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
 
     // Tạo Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -624,6 +660,8 @@ export class OrdersService {
       metadata: {
         ma_kh: maKh,
         email_nhan_voucher: emailNhanVoucher || '',
+        // Lưu danh sách ma_ctgh được chọn để dùng khi xử lý success
+        ma_ctgh_list: cartItems.map(i => i.ma_ctgh).join(','),
       },
     });
 
@@ -646,13 +684,23 @@ export class OrdersService {
     const maKh = stripeSession.metadata?.ma_kh;
     if (!maKh) throw new BadRequestException('Không tìm thấy thông tin khách hàng từ phiên Stripe.');
 
+    // Lấy danh sách ma_ctgh được chọn (lưu trong metadata khi tạo session)
+    const maCtghListStr = stripeSession.metadata?.ma_ctgh_list || '';
+    const maCtghList = maCtghListStr ? maCtghListStr.split(',').filter(Boolean) : [];
+
     const client = this.supabaseService.getClient();
 
-    // Lấy giỏ hàng của khách hàng
-    const { data: cartItems, error: cartError } = await client
+    // Lấy giỏ hàng của khách hàng — chỉ lấy đúng những item được chọn
+    let cartQuery = client
       .from('chi_tiet_gio_hang')
       .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt )`)
       .eq('ma_kh', maKh);
+
+    if (maCtghList.length > 0) {
+      cartQuery = cartQuery.in('ma_ctgh', maCtghList);
+    }
+
+    const { data: cartItems, error: cartError } = await cartQuery;
 
     if (cartError) throw new InternalServerErrorException(cartError.message);
     if (!cartItems || cartItems.length === 0) throw new BadRequestException('Giỏ hàng trống hoặc đã được xử lý.');
@@ -729,8 +777,12 @@ export class OrdersService {
       trang_thai_thanh_toan: 'thanh_cong',
     });
 
-    // Xóa giỏ hàng (giống createOrder: xóa theo ma_kh)
-    await client.from('chi_tiet_gio_hang').delete().eq('ma_kh', maKh);
+    // Chỉ xóa những item đã thanh toán ra khỏi giỏ hàng
+    if (maCtghList.length > 0) {
+      await client.from('chi_tiet_gio_hang').delete().in('ma_ctgh', maCtghList);
+    } else {
+      await client.from('chi_tiet_gio_hang').delete().eq('ma_kh', maKh);
+    }
 
     return { ma_dh: maDh, tong_tien: tongTien };
   }

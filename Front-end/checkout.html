@@ -289,17 +289,17 @@
     // ── STRIPE: chuyển hướng sang Stripe Checkout ──────────────────────────
     if (paymentMethod === 'stripe') {
       try {
-        // Gọi backend → backend tạo session Stripe → trả về redirect 303
-        // Dùng form POST để trình duyệt tự theo redirect
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/api/orders/stripe/create-checkout';
+        // Lấy danh sách ma_ctgh của các item được chọn để truyền lên backend
+        const maCtghList = checkoutItems
+          .map(item => item.ma_ctgh)
+          .filter(Boolean);
 
-        // Đính kèm Authorization header qua hidden field không được;
-        // thay vào đó dùng fetch rồi redirect thủ công
         const res = await apiFetch('/api/orders/stripe/create-checkout', {
           method: 'POST',
-          body: JSON.stringify({ email_nhan_voucher: email }),
+          body: JSON.stringify({
+            email_nhan_voucher: email,
+            ma_ctgh_list: maCtghList,
+          }),
         });
 
         if (res.url) {

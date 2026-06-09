@@ -14,15 +14,22 @@ const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateComplaintDto {
     ma_voucher;
+    ma_voucher_code;
     ly_do;
 }
 exports.CreateComplaintDto = CreateComplaintDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'VC-12345678' }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateComplaintDto.prototype, "ma_voucher", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'VC-12345678' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateComplaintDto.prototype, "ma_voucher_code", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Voucher không thể áp dụng tại cửa hàng mặc dù còn hạn' }),
     (0, class_validator_1.IsString)(),

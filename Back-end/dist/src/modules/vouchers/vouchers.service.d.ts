@@ -69,8 +69,10 @@ export declare class VouchersService {
                 diem_so_dg: any;
                 noi_dung_binh_luan: any;
                 ngay_danh_gia: any;
+                ma_kh: any;
                 khach_hang: {
                     ho_ten: any;
+                    ma_tk: any;
                 }[];
             }[];
             diem_trung_binh: string | null;

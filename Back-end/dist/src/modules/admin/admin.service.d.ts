@@ -50,6 +50,10 @@ export declare class AdminService {
         };
         message: string;
     }>;
+    deleteUser(userId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getPendingVouchers(): Promise<{
         success: boolean;
         data: any[];

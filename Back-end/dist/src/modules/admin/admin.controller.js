@@ -32,6 +32,9 @@ let AdminController = class AdminController {
     unbanUser(id) {
         return this.adminService.unbanUser(id);
     }
+    deleteUser(id) {
+        return this.adminService.deleteUser(id);
+    }
     getPendingVouchers() {
         return this.adminService.getPendingVouchers();
     }
@@ -102,6 +105,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "unbanUser", null);
+__decorate([
+    (0, common_1.Delete)('users/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "deleteUser", null);
 __decorate([
     (0, common_1.Get)('vouchers/pending'),
     __metadata("design:type", Function),

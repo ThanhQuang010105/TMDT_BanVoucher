@@ -224,7 +224,8 @@
               email: u.email,
               role: role,
               isBanned: isBanned,
-              confirmed: !!u.email_confirmed_at
+              confirmed: !!u.email_confirmed_at,
+              dbStatus: u.db_status
             };
           });
           renderUsers(allUsers);
@@ -262,15 +263,35 @@
       tbody.innerHTML = users.map(u => {
         const badgeClass = roleBadges[u.role] || 'bg-surface-variant text-on-surface-variant font-bold px-2.5 py-0.5 rounded-full text-xs';
         const label = roleLabels[u.role] || u.role;
-        const statusBadge = u.isBanned 
-          ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">Đã khóa</span>' 
-          : '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">Hoạt động</span>';
+        
+        let statusBadge = '';
+        if (u.isBanned) {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">Đã khóa</span>';
+        } else if (u.dbStatus === 'pending') {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">Chờ duyệt</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">Hoạt động</span>';
+        }
 
-        const actionBtn = u.role === 'admin' 
-          ? '<span class="text-xs text-outline font-medium">Hệ thống</span>'
-          : u.isBanned 
-            ? `<button onclick="toggleBan('${u.id}', false)" class="text-xs text-secondary hover:underline font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-sm">lock_open</span>Kích hoạt</button>`
-            : `<button onclick="toggleBan('${u.id}', true)" class="text-xs text-error hover:underline font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-sm">lock</span>Khóa</button>`;
+        let actionBtn = '';
+        if (u.role === 'admin') {
+          actionBtn = '<span class="text-xs text-outline font-medium">Hệ thống</span>';
+        } else {
+          const banText = u.isBanned ? 'Kích hoạt' : 'Khóa';
+          const banIcon = u.isBanned ? 'lock_open' : 'lock';
+          const banColor = u.isBanned ? 'text-secondary' : 'text-error';
+          
+          actionBtn = `
+            <div class="flex items-center gap-3">
+              <button onclick="toggleBan('${u.id}', ${!u.isBanned})" class="text-xs ${banColor} hover:underline font-semibold flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">${banIcon}</span>${banText}
+              </button>
+              <button onclick="deleteUserAccount('${u.id}')" class="text-xs text-error hover:underline font-semibold flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">delete</span>Xóa
+              </button>
+            </div>
+          `;
+        }
 
         return `
           <tr class="hover:bg-surface-container-low/30 transition-colors">
@@ -308,6 +329,19 @@
         }
       } catch (err) {
         showToast(err.message || 'Lỗi thao tác', 'error');
+      }
+    }
+
+    async function deleteUserAccount(userId) {
+      if (!confirm('Bạn có chắc chắn muốn XÓA vĩnh viễn tài khoản này? Toàn bộ thông tin liên quan sẽ bị xóa.')) return;
+      try {
+        const res = await apiFetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        if (res.success || res.message) {
+          showToast(res.message || 'Xóa tài khoản thành công');
+          await loadUsers();
+        }
+      } catch (err) {
+        showToast(err.message || 'Lỗi xóa tài khoản', 'error');
       }
     }
 
