@@ -109,6 +109,44 @@ let OrdersService = class OrdersService {
             throw new common_1.InternalServerErrorException(error.message);
         return { message: 'Đã xóa khỏi giỏ hàng.' };
     }
+    async updateCartQuantity(accessToken, maCtgh, soLuongMua) {
+        if (soLuongMua < 1) {
+            return this.removeFromCart(accessToken, maCtgh);
+        }
+        const client = this.supabaseService.getClient();
+        const maKh = await this.getKhachHang(accessToken);
+        const { data: cartItem, error: cartError } = await client
+            .from('chi_tiet_gio_hang')
+            .select('ma_voucher, ma_kh')
+            .eq('ma_ctgh', maCtgh)
+            .single();
+        if (cartError || !cartItem)
+            throw new common_1.NotFoundException('Không tìm thấy sản phẩm trong giỏ hàng.');
+        if (cartItem.ma_kh !== maKh)
+            throw new common_1.BadRequestException('Không có quyền thay đổi sản phẩm này.');
+        const { data: voucher } = await client
+            .from('voucher')
+            .select('so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt')
+            .eq('ma_voucher', cartItem.ma_voucher)
+            .single();
+        if (!voucher)
+            throw new common_1.NotFoundException('Voucher không tồn tại.');
+        const now = new Date().toISOString();
+        if (voucher.trang_thai !== 'active')
+            throw new common_1.BadRequestException('Voucher không còn hoạt động.');
+        if (voucher.ngay_kt < now)
+            throw new common_1.BadRequestException('Voucher đã hết hạn bán.');
+        const conLai = voucher.so_luong_phat_hanh - voucher.so_luong_da_ban;
+        if (soLuongMua > conLai)
+            throw new common_1.BadRequestException(`Chỉ còn ${conLai} voucher trong kho.`);
+        const { error: updateError } = await client
+            .from('chi_tiet_gio_hang')
+            .update({ so_luong_mua: soLuongMua })
+            .eq('ma_ctgh', maCtgh);
+        if (updateError)
+            throw new common_1.InternalServerErrorException(updateError.message);
+        return { success: true, message: 'Đã cập nhật số lượng.' };
+    }
     async createOrder(accessToken, dto) {
         const client = this.supabaseService.getClient();
         const maKh = await this.getKhachHang(accessToken);

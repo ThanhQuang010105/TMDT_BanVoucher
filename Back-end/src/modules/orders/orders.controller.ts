@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
   Res,
 } from '@nestjs/common';
@@ -43,6 +44,15 @@ export class OrdersController {
     @Param('maCtgh') maCtgh: string,
   ) {
     return this.ordersService.removeFromCart(token, maCtgh);
+  }
+
+  @Put('cart/:maCtgh')
+  updateCartQuantity(
+    @CurrentToken() token: string,
+    @Param('maCtgh') maCtgh: string,
+    @Body('so_luong_mua') soLuongMua: number,
+  ) {
+    return this.ordersService.updateCartQuantity(token, maCtgh, soLuongMua);
   }
 
   // ── ĐẶT HÀNG (Luồng cũ: MoMo, VNPay) ────────────────────────────────────

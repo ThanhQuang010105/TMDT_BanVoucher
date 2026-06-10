@@ -30,6 +30,12 @@ export declare class OrdersController {
     removeFromCart(token: string, maCtgh: string): Promise<{
         message: string;
     }>;
+    updateCartQuantity(token: string, maCtgh: string, soLuongMua: number): Promise<{
+        message: string;
+    } | {
+        success: boolean;
+        message: string;
+    }>;
     createOrder(token: string, dto: CreateOrderDto): Promise<{
         message: string;
         ma_dh: string;

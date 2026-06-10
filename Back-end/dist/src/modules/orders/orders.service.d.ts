@@ -30,6 +30,12 @@ export declare class OrdersService {
     removeFromCart(accessToken: string, maCtgh: string): Promise<{
         message: string;
     }>;
+    updateCartQuantity(accessToken: string, maCtgh: string, soLuongMua: number): Promise<{
+        message: string;
+    } | {
+        success: boolean;
+        message: string;
+    }>;
     createOrder(accessToken: string, dto: CreateOrderDto): Promise<{
         message: string;
         ma_dh: string;

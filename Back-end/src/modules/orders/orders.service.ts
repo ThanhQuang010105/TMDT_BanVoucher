@@ -127,6 +127,51 @@ export class OrdersService {
     return { message: 'Đã xóa khỏi giỏ hàng.' };
   }
 
+  // ─── GIỎ HÀNG: CẬP NHẬT SỐ LƯỢNG ───────────────────────────────────────────
+  async updateCartQuantity(accessToken: string, maCtgh: string, soLuongMua: number) {
+    if (soLuongMua < 1) {
+      return this.removeFromCart(accessToken, maCtgh);
+    }
+
+    const client = this.supabaseService.getClient();
+    const maKh = await this.getKhachHang(accessToken);
+
+    // Lấy thông tin chi tiết giỏ hàng hiện tại để validate voucher
+    const { data: cartItem, error: cartError } = await client
+      .from('chi_tiet_gio_hang')
+      .select('ma_voucher, ma_kh')
+      .eq('ma_ctgh', maCtgh)
+      .single();
+
+    if (cartError || !cartItem) throw new NotFoundException('Không tìm thấy sản phẩm trong giỏ hàng.');
+    if (cartItem.ma_kh !== maKh) throw new BadRequestException('Không có quyền thay đổi sản phẩm này.');
+
+    // Kiểm tra hàng tồn kho
+    const { data: voucher } = await client
+      .from('voucher')
+      .select('so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt')
+      .eq('ma_voucher', cartItem.ma_voucher)
+      .single();
+
+    if (!voucher) throw new NotFoundException('Voucher không tồn tại.');
+    
+    const now = new Date().toISOString();
+    if (voucher.trang_thai !== 'active') throw new BadRequestException('Voucher không còn hoạt động.');
+    if (voucher.ngay_kt < now) throw new BadRequestException('Voucher đã hết hạn bán.');
+
+    const conLai = voucher.so_luong_phat_hanh - voucher.so_luong_da_ban;
+    if (soLuongMua > conLai) throw new BadRequestException(`Chỉ còn ${conLai} voucher trong kho.`);
+
+    // Cập nhật số lượng
+    const { error: updateError } = await client
+      .from('chi_tiet_gio_hang')
+      .update({ so_luong_mua: soLuongMua })
+      .eq('ma_ctgh', maCtgh);
+
+    if (updateError) throw new InternalServerErrorException(updateError.message);
+    return { success: true, message: 'Đã cập nhật số lượng.' };
+  }
+
   // ─── TẠO ĐƠN HÀNG & THANH TOÁN MÔ PHỎNG ────────────────────────────────────
   async createOrder(accessToken: string, dto: CreateOrderDto) {
     const client = this.supabaseService.getClient();

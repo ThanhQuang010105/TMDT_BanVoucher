@@ -246,12 +246,12 @@
           <div class="flex flex-col items-end gap-3">
             <span class="text-2xl font-bold text-primary">${formatCurrency(item.voucher?.gia_ban || 0)}</span>
             <div class="flex items-center border border-outline-variant rounded-full p-1 bg-surface">
-              <button onclick="updateQty('${item.ma_ctgh}', ${item.so_luong_mua - 1})"
+              <button onclick="changeQty('${item.ma_ctgh}', -1)"
                 class="w-8 h-8 flex items-center justify-center hover:bg-surface-container rounded-full transition-colors">
                 <span class="material-symbols-outlined text-[18px]">remove</span>
               </button>
               <span class="w-10 text-center text-sm font-medium" id="qty-${item.ma_ctgh}">${item.so_luong_mua}</span>
-              <button onclick="updateQty('${item.ma_ctgh}', ${item.so_luong_mua + 1})"
+              <button onclick="changeQty('${item.ma_ctgh}', 1)"
                 class="w-8 h-8 flex items-center justify-center hover:bg-surface-container rounded-full transition-colors">
                 <span class="material-symbols-outlined text-[18px]">add</span>
               </button>
@@ -307,17 +307,36 @@
     }
   }
 
-  async function updateQty(maCtgh, newQty) {
-    if (newQty < 1) { removeItem(maCtgh); return; }
+  async function changeQty(maCtgh, delta) {
     const item = cartItems.find(i => i.ma_ctgh === maCtgh);
     if (!item) return;
-    const max = (item.voucher?.so_luong_phat_hanh || 99) - (item.voucher?.so_luong_da_ban || 0);
-    if (newQty > max) { showToast('Không đủ hàng tồn kho', 'error'); return; }
 
-    // Optimistic update dùng đúng field so_luong_mua
-    item.so_luong_mua = newQty;
-    document.getElementById(`qty-${maCtgh}`).textContent = newQty;
-    updateSummary();
+    const newQty = (item.so_luong_mua || 0) + delta;
+    if (newQty < 1) {
+      removeItem(maCtgh);
+      return;
+    }
+
+    const max = (item.voucher?.so_luong_phat_hanh || 99) - (item.voucher?.so_luong_da_ban || 0);
+    if (newQty > max) {
+      showToast('Không đủ hàng tồn kho', 'error');
+      return;
+    }
+
+    // Gửi request cập nhật lên Database để đồng bộ
+    try {
+      await apiFetch(`/api/orders/cart/${maCtgh}`, {
+        method: 'PUT',
+        body: JSON.stringify({ so_luong_mua: newQty }),
+      });
+
+      // Cập nhật local state và giao diện sau khi API thành công
+      item.so_luong_mua = newQty;
+      document.getElementById(`qty-${maCtgh}`).textContent = newQty;
+      updateSummary();
+    } catch (err) {
+      showToast('Lỗi cập nhật số lượng: ' + err.message, 'error');
+    }
   }
 
   function toggleSelectAll(checked) {

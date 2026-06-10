@@ -35,6 +35,9 @@ let OrdersController = class OrdersController {
     removeFromCart(token, maCtgh) {
         return this.ordersService.removeFromCart(token, maCtgh);
     }
+    updateCartQuantity(token, maCtgh, soLuongMua) {
+        return this.ordersService.updateCartQuantity(token, maCtgh, soLuongMua);
+    }
     createOrder(token, dto) {
         return this.ordersService.createOrder(token, dto);
     }
@@ -108,6 +111,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "removeFromCart", null);
+__decorate([
+    (0, common_1.Put)('cart/:maCtgh'),
+    __param(0, (0, current_token_decorator_1.CurrentToken)()),
+    __param(1, (0, common_1.Param)('maCtgh')),
+    __param(2, (0, common_1.Body)('so_luong_mua')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Number]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "updateCartQuantity", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, current_token_decorator_1.CurrentToken)()),
