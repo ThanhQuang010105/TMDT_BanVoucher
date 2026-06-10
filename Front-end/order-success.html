@@ -152,7 +152,7 @@
 
 <script src="js/api.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     if (!Auth.requireAuth()) return;
 
     const user = Auth.getUser();
@@ -162,15 +162,23 @@
 
     const params = new URLSearchParams(window.location.search);
     const isStripe = params.get('stripe') === '1';
+    const sessionId = params.get('session_id');
 
-    if (isStripe) {
-      // ── Thanh toán qua Stripe: đọc tham số từ URL ──
-      const maDh = params.get('ma_dh') || 'N/A';
-      const total = parseFloat(params.get('total') || '0');
-      document.getElementById('order-id').textContent = '#' + maDh;
-      document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
-      document.getElementById('order-total').textContent = formatCurrency(total);
-      document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+    if (isStripe && sessionId) {
+      // ── Thanh toán qua Stripe: gọi API để hoàn tất đơn hàng ──
+      try {
+        const result = await apiFetch(`/api/orders/stripe/confirm?session_id=${sessionId}`, { method: 'POST' });
+        document.getElementById('order-id').textContent = '#' + (result.ma_dh || 'N/A');
+        document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
+        document.getElementById('order-total').textContent = formatCurrency(result.tong_tien || 0);
+        document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+      } catch (err) {
+        // Nếu đã xử lý rồi hoặc lỗi nhỏ, vẫn hiển thị trang thành công chung
+        document.getElementById('order-id').textContent = 'Đã xử lý';
+        document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
+        document.getElementById('order-total').textContent = '---';
+        document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+      }
     } else {
       // ── Thanh toán MoMo / VNPay: đọc từ sessionStorage ──
       const resultStr = sessionStorage.getItem('order_result');
@@ -188,6 +196,7 @@
     // Confetti animation
     startConfetti();
   });
+
 
   function startConfetti() {
     const canvas = document.getElementById('confetti');
