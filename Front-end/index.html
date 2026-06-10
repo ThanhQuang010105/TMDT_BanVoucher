@@ -287,7 +287,7 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                Auth.setSession(res.access_token, res.user);
+                Auth.setSession(res.access_token, res.user, res.refresh_token);
                 showToast('Đăng nhập thành công!', 'success');
                 // Redirect theo vai trò
                 setTimeout(() => {

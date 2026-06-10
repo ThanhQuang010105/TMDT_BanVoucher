@@ -8,13 +8,16 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 // --- Token Management ---
 const Auth = {
   getToken: () => localStorage.getItem('access_token'),
+  getRefreshToken: () => localStorage.getItem('refresh_token'),
   getUser: () => JSON.parse(localStorage.getItem('user') || 'null'),
-  setSession: (token, user) => {
+  setSession: (token, user, refreshToken) => {
     localStorage.setItem('access_token', token);
     localStorage.setItem('user', JSON.stringify(user));
+    if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
   },
   clear: () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
   },
   isLoggedIn: () => !!localStorage.getItem('access_token'),
@@ -27,6 +30,26 @@ const Auth = {
   },
 };
 
+// --- Tự động làm mới token khi hết hạn ---
+async function tryRefreshToken() {
+  const refreshToken = Auth.getRefreshToken();
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data.access_token) {
+      Auth.setSession(data.access_token, Auth.getUser(), data.refresh_token || refreshToken);
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+
 // --- Core Fetch Wrapper ---
 async function apiFetch(path, options = {}) {
   const token = Auth.getToken();
@@ -36,7 +59,26 @@ async function apiFetch(path, options = {}) {
     ...(options.headers || {}),
   };
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  // Nếu hết hạn token (401), thử tự động làm mới rồi gọi lại 1 lần
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      const newToken = Auth.getToken();
+      const retryHeaders = {
+        ...headers,
+        Authorization: `Bearer ${newToken}`,
+      };
+      res = await fetch(`${API_BASE}${path}`, { ...options, headers: retryHeaders });
+    } else {
+      // Refresh thất bại → logout và về trang đăng nhập
+      Auth.clear();
+      window.location.href = 'index.html';
+      return;
+    }
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
@@ -47,6 +89,7 @@ async function apiFetch(path, options = {}) {
   }
   return data;
 }
+
 
 // --- UI Toast Notification ---
 function showToast(message, type = 'success') {

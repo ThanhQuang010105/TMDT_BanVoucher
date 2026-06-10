@@ -260,4 +260,22 @@ export class AuthService {
 
     return { message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.' };
   }
+  // ─── LÀM MỚI TOKEN ───────────────────────────────────────────────────────────
+  async refreshToken(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Không có refresh token.');
+    }
+
+    const authClient = this.supabaseService.getAuthClient();
+    const { data, error } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
+
+    if (error || !data.session) {
+      throw new UnauthorizedException('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
+    }
+
+    return {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    };
+  }
 }

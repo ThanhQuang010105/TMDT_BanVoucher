@@ -143,7 +143,8 @@ export class AdminService {
 
   async deleteVoucher(voucherId: string) {
     const client = this.supabase.getClient();
-    // Get voucher to delete banner if any
+
+    // Lấy thông tin banner để xóa file lưu trữ nếu có
     const { data: voucher } = await client
       .from('voucher')
       .select('link_voucher_banner')
@@ -151,7 +152,6 @@ export class AdminService {
       .single();
 
     if (voucher?.link_voucher_banner) {
-      // Extract path
       const parts = voucher.link_voucher_banner.split('/storage/v1/object/public/images/');
       const oldPath = parts[1] || null;
       if (oldPath) {
@@ -159,6 +159,25 @@ export class AdminService {
       }
     }
 
+    // 1. Xóa chi tiết giỏ hàng đang tham chiếu voucher này
+    await client.from('chi_tiet_gio_hang').delete().eq('ma_voucher', voucherId);
+
+    // 2. Xóa các mã voucher đã phát hành (chi_tiet_don_hang sẽ cascade qua ma_dh)
+    //    Trước tiên xóa voucher_phat_hanh (có FK → chi_tiet_don_hang.ma_dh và voucher)
+    await client.from('voucher_phat_hanh').delete().eq('ma_voucher', voucherId);
+
+    // 3. Xóa các bản ghi chi_tiet_don_hang liên quan
+    await client.from('chi_tiet_don_hang').delete().eq('ma_voucher', voucherId);
+
+    // 4. Xóa danh sách đánh giá, khiếu nại liên quan
+    await client.from('danh_gia').delete().eq('ma_voucher', voucherId);
+    await client.from('khieu_nai').delete().eq('ma_voucher', voucherId);
+
+    // 5. Xóa ánh xạ chi nhánh và điều kiện áp dụng
+    await client.from('voucher_chi_nhanh').delete().eq('ma_voucher', voucherId);
+    await client.from('dieu_kien_ap_dung').delete().eq('ma_voucher', voucherId);
+
+    // 6. Cuối cùng mới xóa bản ghi voucher chính
     const { error } = await client
       .from('voucher')
       .delete()
