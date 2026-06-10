@@ -163,21 +163,29 @@
     const params = new URLSearchParams(window.location.search);
     const isStripe = params.get('stripe') === '1';
     const sessionId = params.get('session_id');
-
-    if (isStripe && sessionId) {
-      // ── Thanh toán qua Stripe: gọi API để hoàn tất đơn hàng ──
-      try {
-        const result = await apiFetch(`/api/orders/stripe/confirm?session_id=${sessionId}`, { method: 'POST' });
-        document.getElementById('order-id').textContent = '#' + (result.ma_dh || 'N/A');
+    if (isStripe) {
+      if (params.get('ma_dh') && params.get('total')) {
+        // ── Trường hợp 1: Có sẵn thông tin từ URL (từ Backend cũ) ──
+        const maDh = params.get('ma_dh');
+        const total = parseFloat(params.get('total') || '0');
+        document.getElementById('order-id').textContent = '#' + maDh;
         document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
-        document.getElementById('order-total').textContent = formatCurrency(result.tong_tien || 0);
+        document.getElementById('order-total').textContent = formatCurrency(total);
         document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
-      } catch (err) {
-        // Nếu đã xử lý rồi hoặc lỗi nhỏ, vẫn hiển thị trang thành công chung
-        document.getElementById('order-id').textContent = 'Đã xử lý';
-        document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
-        document.getElementById('order-total').textContent = '---';
-        document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+      } else if (sessionId) {
+        // ── Trường hợp 2: Có session_id (từ Backend mới) → gọi API để hoàn tất ──
+        try {
+          const result = await apiFetch(`/api/orders/stripe/confirm?session_id=${sessionId}`, { method: 'POST' });
+          document.getElementById('order-id').textContent = '#' + (result.ma_dh || 'N/A');
+          document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
+          document.getElementById('order-total').textContent = formatCurrency(result.tong_tien || 0);
+          document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+        } catch (err) {
+          document.getElementById('order-id').textContent = 'Đã xử lý';
+          document.getElementById('order-time').textContent = new Date().toLocaleString('vi-VN');
+          document.getElementById('order-total').textContent = '---';
+          document.getElementById('order-method').textContent = 'Thẻ Quốc tế (Stripe)';
+        }
       }
     } else {
       // ── Thanh toán MoMo / VNPay: đọc từ sessionStorage ──

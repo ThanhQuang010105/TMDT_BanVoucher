@@ -204,6 +204,20 @@ let AuthService = class AuthService {
             throw new common_1.BadRequestException(`Đặt lại mật khẩu thất bại: ${error.message}`);
         return { message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.' };
     }
+    async refreshToken(refreshToken) {
+        if (!refreshToken) {
+            throw new common_1.UnauthorizedException('Không có refresh token.');
+        }
+        const authClient = this.supabaseService.getAuthClient();
+        const { data, error } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
+        if (error || !data.session) {
+            throw new common_1.UnauthorizedException('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
+        }
+        return {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+        };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

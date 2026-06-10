@@ -149,6 +149,13 @@ let AdminService = class AdminService {
                 await client.storage.from('images').remove([oldPath]);
             }
         }
+        await client.from('chi_tiet_gio_hang').delete().eq('ma_voucher', voucherId);
+        await client.from('voucher_phat_hanh').delete().eq('ma_voucher', voucherId);
+        await client.from('chi_tiet_don_hang').delete().eq('ma_voucher', voucherId);
+        await client.from('danh_gia').delete().eq('ma_voucher', voucherId);
+        await client.from('khieu_nai').delete().eq('ma_voucher', voucherId);
+        await client.from('voucher_chi_nhanh').delete().eq('ma_voucher', voucherId);
+        await client.from('dieu_kien_ap_dung').delete().eq('ma_voucher', voucherId);
         const { error } = await client
             .from('voucher')
             .delete()

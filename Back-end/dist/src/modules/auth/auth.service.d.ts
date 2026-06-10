@@ -39,4 +39,8 @@ export declare class AuthService {
     resetPassword(dto: ResetPasswordDto): Promise<{
         message: string;
     }>;
+    refreshToken(refreshToken: string): Promise<{
+        access_token: string;
+        refresh_token: string;
+    }>;
 }

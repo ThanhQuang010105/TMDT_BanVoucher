@@ -132,7 +132,7 @@ export declare class OrdersService {
         url: string;
     }>;
     handleStripeSuccess(accessToken: string, sessionId: string): Promise<{
-        ma_dh: string;
+        ma_dh: any;
         tong_tien: number;
     }>;
 }

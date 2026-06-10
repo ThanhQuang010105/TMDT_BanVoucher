@@ -674,6 +674,19 @@ export class OrdersService {
     const Stripe = require('stripe');
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+    const client = this.supabaseService.getClient();
+
+    // 1. Kiểm tra xem giao dịch này đã được xử lý tạo đơn hàng chưa để tránh trùng lặp
+    const { data: existingTx } = await client
+      .from('lich_su_giao_dich')
+      .select('ma_dh, so_tien')
+      .eq('ma_giao_dich_cung_cap', sessionId)
+      .maybeSingle();
+
+    if (existingTx) {
+      return { ma_dh: existingTx.ma_dh, tong_tien: Number(existingTx.so_tien) };
+    }
+
     // Lấy thông tin phiên từ Stripe
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
 
@@ -687,8 +700,6 @@ export class OrdersService {
     // Lấy danh sách ma_ctgh được chọn (lưu trong metadata khi tạo session)
     const maCtghListStr = stripeSession.metadata?.ma_ctgh_list || '';
     const maCtghList = maCtghListStr ? maCtghListStr.split(',').filter(Boolean) : [];
-
-    const client = this.supabaseService.getClient();
 
     // Lấy giỏ hàng của khách hàng — chỉ lấy đúng những item được chọn
     let cartQuery = client
@@ -775,6 +786,7 @@ export class OrdersService {
       so_tien: tongTien,
       phuong_thuc_thanh_toan: 'the_quoc_te',
       trang_thai_thanh_toan: 'thanh_cong',
+      ma_giao_dich_cung_cap: sessionId,
     });
 
     // Chỉ xóa những item đã thanh toán ra khỏi giỏ hàng

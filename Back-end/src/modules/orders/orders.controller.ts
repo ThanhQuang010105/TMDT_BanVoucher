@@ -141,8 +141,14 @@ export class OrdersController {
     @Res() res: Response,
   ) {
     const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
-    // Chuyển hướng về trang success của frontend, kèm session_id để frontend gọi API hoàn tất
-    return res.redirect(`${frontendUrl}/order-success.html?session_id=${sessionId}&stripe=1`);
+    try {
+      // Gọi xử lý tạo đơn hàng trực tiếp ở Backend
+      const result = await this.ordersService.handleStripeSuccess('', sessionId);
+      return res.redirect(`${frontendUrl}/order-success?stripe=1&ma_dh=${result.ma_dh}&total=${result.tong_tien}`);
+    } catch (err) {
+      // Nếu có lỗi, chuyển hướng về trang lỗi hoặc checkout kèm báo lỗi
+      return res.redirect(`${frontendUrl}/checkout?stripe_error=${encodeURIComponent(err.message || 'Lỗi thanh toán')}`);
+    }
   }
 
   // POST /api/orders/stripe/confirm → Frontend gọi sau khi redirect về, kèm token của user
@@ -158,6 +164,6 @@ export class OrdersController {
   @Get('stripe/cancel')
   stripeCancel(@Res() res: Response) {
     const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
-    return res.redirect(`${frontendUrl}/checkout.html?stripe_cancelled=1`);
+    return res.redirect(`${frontendUrl}/checkout?stripe_cancelled=1`);
   }
 }

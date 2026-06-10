@@ -346,11 +346,15 @@
     }
   }
 
-  // Hiển thị thông báo nếu Stripe bị huỷ
+  // Hiển thị thông báo nếu Stripe bị huỷ hoặc lỗi
   document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('stripe_cancelled') === '1') {
       showToast('Thanh toán Stripe đã bị huỷ. Giỏ hàng của bạn vẫn còn.', 'error');
+    }
+    const stripeError = params.get('stripe_error');
+    if (stripeError) {
+      showToast('Lỗi thanh toán Stripe: ' + decodeURIComponent(stripeError), 'error');
     }
   });
 </script>

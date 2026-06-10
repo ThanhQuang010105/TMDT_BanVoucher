@@ -66,14 +66,22 @@ let OrdersController = class OrdersController {
         const result = await this.ordersService.createStripeCheckoutSession(token, body.email_nhan_voucher, body.ma_ctgh_list);
         return { success: true, url: result.url };
     }
-    async stripeSuccess(token, sessionId) {
-        const result = await this.ordersService.handleStripeSuccess(token, sessionId);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return `<html><head><meta http-equiv="refresh" content="0;url=${frontendUrl}/order-success?stripe=1&ma_dh=${result.ma_dh}&total=${result.tong_tien}"></head><body>Đang chuyển hướng...</body></html>`;
+    async stripeSuccess(sessionId, res) {
+        const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+        try {
+            const result = await this.ordersService.handleStripeSuccess('', sessionId);
+            return res.redirect(`${frontendUrl}/order-success?stripe=1&ma_dh=${result.ma_dh}&total=${result.tong_tien}`);
+        }
+        catch (err) {
+            return res.redirect(`${frontendUrl}/checkout?stripe_error=${encodeURIComponent(err.message || 'Lỗi thanh toán')}`);
+        }
     }
-    stripeCancel() {
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        return `<html><head><meta http-equiv="refresh" content="0;url=${frontendUrl}/checkout?stripe_cancelled=1"></head><body>Đang chuyển hướng...</body></html>`;
+    async stripeConfirm(token, sessionId) {
+        return this.ordersService.handleStripeSuccess(token, sessionId);
+    }
+    stripeCancel(res) {
+        const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+        return res.redirect(`${frontendUrl}/checkout?stripe_cancelled=1`);
     }
 };
 exports.OrdersController = OrdersController;
@@ -179,16 +187,25 @@ __decorate([
 ], OrdersController.prototype, "createStripeCheckout", null);
 __decorate([
     (0, common_1.Get)('stripe/success'),
+    __param(0, (0, common_1.Query)('session_id')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "stripeSuccess", null);
+__decorate([
+    (0, common_1.Post)('stripe/confirm'),
     __param(0, (0, current_token_decorator_1.CurrentToken)()),
     __param(1, (0, common_1.Query)('session_id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], OrdersController.prototype, "stripeSuccess", null);
+], OrdersController.prototype, "stripeConfirm", null);
 __decorate([
     (0, common_1.Get)('stripe/cancel'),
+    __param(0, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "stripeCancel", null);
 exports.OrdersController = OrdersController = __decorate([

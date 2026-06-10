@@ -530,6 +530,15 @@ let OrdersService = class OrdersService {
     async handleStripeSuccess(accessToken, sessionId) {
         const Stripe = require('stripe');
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const client = this.supabaseService.getClient();
+        const { data: existingTx } = await client
+            .from('lich_su_giao_dich')
+            .select('ma_dh, so_tien')
+            .eq('ma_giao_dich_cung_cap', sessionId)
+            .maybeSingle();
+        if (existingTx) {
+            return { ma_dh: existingTx.ma_dh, tong_tien: Number(existingTx.so_tien) };
+        }
         const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
         if (stripeSession.payment_status !== 'paid') {
             throw new common_1.BadRequestException('Giao dịch chưa hoàn tất.');
@@ -539,7 +548,6 @@ let OrdersService = class OrdersService {
             throw new common_1.BadRequestException('Không tìm thấy thông tin khách hàng từ phiên Stripe.');
         const maCtghListStr = stripeSession.metadata?.ma_ctgh_list || '';
         const maCtghList = maCtghListStr ? maCtghListStr.split(',').filter(Boolean) : [];
-        const client = this.supabaseService.getClient();
         let cartQuery = client
             .from('chi_tiet_gio_hang')
             .select(`ma_ctgh, so_luong_mua, ma_voucher, voucher ( gia_ban, so_luong_phat_hanh, so_luong_da_ban, trang_thai, ngay_kt )`)
@@ -608,6 +616,7 @@ let OrdersService = class OrdersService {
             so_tien: tongTien,
             phuong_thuc_thanh_toan: 'the_quoc_te',
             trang_thai_thanh_toan: 'thanh_cong',
+            ma_giao_dich_cung_cap: sessionId,
         });
         if (maCtghList.length > 0) {
             await client.from('chi_tiet_gio_hang').delete().in('ma_ctgh', maCtghList);
